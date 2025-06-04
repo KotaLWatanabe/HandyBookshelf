@@ -1,4 +1,0 @@
-[debug] [controller] Classpath dependencies List(util, domain, adopter)
-[debug] [controller] Dependencies from configurations List()
-[debug] Bloop wrote the configuration of project 'controller' to 'F:\Workspace\ScalaProject\HandyBookshelf\.bloop\controller.json'
-[success] Generated .bloop\controller.json
