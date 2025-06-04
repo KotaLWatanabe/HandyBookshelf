@@ -1,0 +1,4 @@
+[debug] [domain-test] Classpath dependencies List(util)
+[debug] [domain-test] Dependencies from configurations List(domain)
+[debug] Bloop wrote the configuration of project 'domain-test' to 'F:\Workspace\ScalaProject\HandyBookshelf\.bloop\domain-test.json'
+[success] Generated .bloop\domain-test.json

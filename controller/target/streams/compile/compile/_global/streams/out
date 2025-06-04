@@ -1,0 +1,5 @@
+[error] -- Error: F:\Workspace\ScalaProject\HandyBookshelf\controller\src\main\scala\com\handybookshelf\controller\UserLogic.scala:5:11 
+[error] 5 |case class User(id: Int, name: String)
+[error]   |^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]   |[wartremover:FinalCaseClass] case classes must be final
+[error] one error found

@@ -1,0 +1,4 @@
+[debug] [adopter] Classpath dependencies List(util, domain)
+[debug] [adopter] Dependencies from configurations List()
+[debug] Bloop wrote the configuration of project 'adopter' to 'F:\Workspace\ScalaProject\HandyBookshelf\.bloop\adopter.json'
+[success] Generated .bloop\adopter.json

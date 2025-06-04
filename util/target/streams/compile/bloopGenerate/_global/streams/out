@@ -1,0 +1,4 @@
+[debug] [util] Classpath dependencies List()
+[debug] [util] Dependencies from configurations List()
+[debug] Bloop wrote the configuration of project 'util' to 'F:\Workspace\ScalaProject\HandyBookshelf\.bloop\util.json'
+[success] Generated .bloop\util.json
