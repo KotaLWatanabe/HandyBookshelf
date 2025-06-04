@@ -1,9 +1,11 @@
 /target/
-*/target/
+/*/target/
+/project/project/
 
 /.idea/
 /*.iml
 /.bloop/
+/*/.bloop/
 /.vscode/
 /.metals/
 /.cursor/
