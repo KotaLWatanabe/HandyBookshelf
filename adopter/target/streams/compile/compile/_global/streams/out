@@ -1,7 +1,0 @@
-[warn] -- [E198] Unused Symbol Warning: F:\Workspace\ScalaProject\HandyBookshelf\adopter\src\main\scala\com\handybookshelf\adopter\KokkaiToshokanAccessor.scala:8:19 
-[warn] 8 |import org.http4s.{ParseResult, Uri}
-[warn]   |                   ^^^^^^^^^^^
-[warn]   |                   unused import
-[error] No warnings can be incurred under -Werror (or -Xfatal-warnings)
-[warn] one warning found
-[error] one error found
