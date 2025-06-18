@@ -1,0 +1,38 @@
+# GitHub Actions workflow for Scala Steward
+# https://github.com/scala-steward-org/scala-steward-action
+
+name: Scala Steward
+
+on:
+  schedule:
+    # Run every Sunday at 03:00 UTC
+    - cron: '0 3 * * 0'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  scala-steward:
+    runs-on: ubuntu-latest
+    name: Scala Steward
+    steps:
+      - name: Disable GPG signing
+        run: git config --global commit.gpgsign false
+      - name: Generate token
+        id: generate_token
+        uses: actions/create-github-app-token@v2
+        with:
+          owner: 'KotaLWatanabe'
+          repositories: 'FormalCalculation'
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Install sbt
+        uses: sbt/setup-sbt@v1
+
+      - name: Scala Steward
+        uses: scala-steward-org/scala-steward-action@v2
+        with:
+          github-token: ${{ steps.generate_token.outputs.token }}
+          author-email: 'me@formalcalculation.com'
+          author-name: 'Scala Steward'
+          sign-commits: false
+          cache-ttl: '24hours'

@@ -5,14 +5,14 @@ object Libraries {
   val catsEffectVersion = "3.6.1"
   val scalaTestVersion = "3.2.19"
   val http4sVersion = "0.23.30"
-  val circeVersion = "0.14.13"
+  val circeVersion = "0.14.14"
   val munitVersion = "1.1.1"
   val logbackVersion = "1.5.18"
   val munitCatsEffectVersion = "1.0.7"
-  val ulidVersion = "2025.1.11"
+  val ulidVersion = "2025.1.14"
   val ironVersion = "3.0.1"
   val xmlVersion = "2.4.0"
-  val tapirVersion = "1.11.33"
+  val tapirVersion = "1.11.34"
 
   // Libraries
   lazy val cats = "org.typelevel" %% "cats-core" % catsVersion
@@ -33,8 +33,7 @@ object Libraries {
     "org.typelevel" %% "munit-cats-effect-3" % munitCatsEffectVersion % Test
   lazy val logback =
     "ch.qos.logback" % "logback-classic" % logbackVersion
-//  lazy val slf4j = "org.slf4j" % "slf4j-log4j12" % "2.0.16"
-  lazy val slf4j = "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.24.3"
+  lazy val slf4j = "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.25.0"
 
   lazy val ulid =
     "org.wvlet.airframe" %% "airframe-ulid" % ulidVersion
