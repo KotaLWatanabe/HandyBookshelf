@@ -2,8 +2,8 @@ package com.handybookshelf
 package controller.api.routes
 
 import cats.effect.*
-import com.handybookshelf.controller.UserLogic
-import com.handybookshelf.controller.api.endpoints.UserEndpoints
+import controller.UserLogic
+import controller.api.endpoints.UserEndpoints
 import org.http4s.*
 import sttp.tapir.server.http4s.Http4sServerInterpreter
 

@@ -1,7 +1,7 @@
 package com.handybookshelf
 
 import cats.effect.IO
-import com.handybookshelf.controller.LeastbookshelfRoutes
+import controller.HandyBookshelfRoutes
 import org.http4s.*
 import org.http4s.implicits.*
 
@@ -18,4 +18,4 @@ class HelloWorldSpec extends CatsEffectSuite:
   private[this] lazy val retHelloWorld: IO[Response[IO]] =
     val getHW = Request[IO](Method.GET, uri"/hello/world")
     val helloWorld = HelloWorld.impl[IO]
-    LeastbookshelfRoutes.helloWorldRoutes(helloWorld).orNotFound(getHW)
+    HandyBookshelfRoutes.helloWorldRoutes(helloWorld).orNotFound(getHW)

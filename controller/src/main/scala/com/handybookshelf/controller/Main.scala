@@ -1,8 +1,9 @@
-package com.handybookshelf.controller
+package com.handybookshelf
+package controller
 
 import cats.effect.*
 import com.comcast.ip4s.*
-import com.handybookshelf.controller.api.routes.*
+import api.routes.*
 import org.http4s.server.Router
 import org.http4s.ember.server.EmberServerBuilder
 

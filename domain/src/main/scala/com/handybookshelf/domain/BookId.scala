@@ -2,9 +2,9 @@ package com.handybookshelf
 package domain
 
 import wvlet.airframe.ulid.ULID
-import cats.implicits.*
 
-final case class BookId private (private val value: ULID)
+final case class BookId private (private val value: ULID):
+  override def toString: String = value.toString
 
 object BookId:
   def generate(

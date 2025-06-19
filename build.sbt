@@ -65,20 +65,33 @@ lazy val util = (project in file("util"))
     commonSettings
   )
 
-lazy val domain = (project in file("domain"))
+lazy val infrastructure = (project in file("infrastructure"))
   .settings(
     commonSettings
   )
   .dependsOn(util)
 
+lazy val domain = (project in file("domain"))
+  .settings(
+    commonSettings
+  )
+  .dependsOn(util, infrastructure)
+
 lazy val adopter = (project in file("adopter"))
   .settings(
     commonSettings
   )
-  .dependsOn(util, domain)
+  .dependsOn(util, domain, infrastructure)
+
+lazy val usecase = (project in file("usecase"))
+  .settings(
+    commonSettings,
+    libraryDependencies += Libraries.atnosEff
+  )
+  .dependsOn(util, domain, adopter, infrastructure)
 
 lazy val controller = (project in file("controller"))
   .settings(
     commonSettings
   )
-  .dependsOn(util, domain, adopter)
+  .dependsOn(util, domain, adopter, usecase, infrastructure)

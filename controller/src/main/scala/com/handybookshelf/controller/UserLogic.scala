@@ -1,4 +1,5 @@
-package com.handybookshelf.controller
+package com.handybookshelf
+package controller
 
 import cats.effect.IO
 

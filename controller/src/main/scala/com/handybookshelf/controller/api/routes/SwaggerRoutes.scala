@@ -2,7 +2,7 @@ package com.handybookshelf
 package controller.api.routes
 
 import cats.effect.IO
-import com.handybookshelf.controller.api.endpoints.UserEndpoints
+import controller.api.endpoints.UserEndpoints
 import org.http4s.HttpRoutes
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.server.http4s.Http4sServerInterpreter

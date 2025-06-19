@@ -3,8 +3,8 @@ package adopter
 
 import cats.effect.IO
 import cats.implicits.*
-import com.handybookshelf.ISBN.*
-import com.handybookshelf.domain.Book
+import ISBN.*
+import domain.Book
 import org.http4s.Uri
 import org.http4s.ember.client.EmberClientBuilder
 import org.http4s.implicits.*
@@ -40,7 +40,7 @@ object KokkaiToshokanAccessor:
           xml <- Try(XML.loadString(xmlStr)).toEither
             .leftMap(e => AdopterError(e.getMessage))
           books = xmlToBooks(xml).toMap.map { case (isbn, title) =>
-            Book.fromISBN(isbn, title.nes)
+            Book.generateFromISBN(isbn, title.nes)
           }.toSet
         } yield books
       }

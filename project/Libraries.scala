@@ -13,6 +13,7 @@ object Libraries {
   val ironVersion = "3.0.1"
   val xmlVersion = "2.4.0"
   val tapirVersion = "1.11.34"
+  val atnosEffVersion = "7.0.4"
 
   // Libraries
   lazy val cats = "org.typelevel" %% "cats-core" % catsVersion
@@ -53,6 +54,15 @@ object Libraries {
   lazy val sttp: Seq[ModuleID] = Seq(
     "com.softwaremill.sttp.apispec" %% "openapi-circe-yaml" % "0.11.9"
   )
+  lazy val atnosEff = "org.atnos" %% "eff" % atnosEffVersion
+  
+  // Akka dependencies - use 2.8.x for Scala 3 compatibility
+  val akkaVersion = "2.8.7"
+  lazy val akka: Seq[ModuleID] = Seq(
+    "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
+    "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+    "com.typesafe.akka" %% "akka-slf4j" % akkaVersion
+  )
 
   // Projects
   val common: Seq[ModuleID] =
@@ -67,6 +77,6 @@ object Libraries {
       ironCats,
       xml,
       slf4j
-    ) ++ http4s ++ tapir ++ sttp
+    ) ++ http4s ++ tapir ++ sttp ++ akka
   val chapter1: Seq[ModuleID] = Seq(catsEffect)
 }

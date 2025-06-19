@@ -1,4 +1,5 @@
-package com.handybookshelf.controller.api
+package com.handybookshelf
+package controller.api
 
 import sttp.tapir.*
 
