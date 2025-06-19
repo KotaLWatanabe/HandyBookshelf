@@ -1,10 +1,9 @@
-package com.handybookshelf
-package domain
+package com.handybookshelf package domain
 package repositories
 
 import cats.effect.IO
-import com.handybookshelf.infrastructure.EventVersion
-import com.handybookshelf.Timestamp
+import util.infrastructure.EventVersion
+import util.Timestamp
 
 /**
  * ドメインイベント専用リポジトリインターフェース

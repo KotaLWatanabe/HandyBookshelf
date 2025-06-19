@@ -2,6 +2,7 @@ package com.handybookshelf
 package usecase
 
 import cats.effect.IO
+import org.atnos.eff.Fx
 
 object EffectStack {
 
@@ -9,6 +10,8 @@ object EffectStack {
       timeout: Long,
       retryCount: Int
   )
+
+  type EffectStack = Fx.fx3[IO, Either[UseCaseError, *], Writer[String, *]]
 
   // Simplified effect type for compilation
   type UseCaseOperation[A] = IO[Either[String, A]]
@@ -25,7 +28,9 @@ object EffectStack {
     io.map(Right(_))
 
   // Configuration access (simplified)
-  def withConfig[A](config: UseCaseConfig)(operation: UseCaseConfig => UseCaseOperation[A]): UseCaseOperation[A] =
+  def withConfig[A](config: UseCaseConfig)(
+      operation: UseCaseConfig => UseCaseOperation[A]
+  ): UseCaseOperation[A] =
     operation(config)
 
   // Runner for usecase operations

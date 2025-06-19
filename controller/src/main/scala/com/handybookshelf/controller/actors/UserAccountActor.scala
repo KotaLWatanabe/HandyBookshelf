@@ -1,5 +1,4 @@
-package com.handybookshelf
-package controller.actors
+package com.handybookshelf package controller.actors
 
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
@@ -8,7 +7,6 @@ import domain.UserAccountId
 object UserAccountActor:
   sealed trait UserAccountCommand
 
-  
   final case class LoginUser(
     userAccountId: UserAccountId,
     replyTo: ActorRef[LoginResponse]
@@ -108,3 +106,13 @@ object UserAccountActorUtil:
    */
   def generateActorName(userAccountId: UserAccountId): String =
     s"user-account-${userAccountId.toString}"
+
+object ActUseCase:
+  sealed trait UseCaseType
+  case object ShowBooks extends UseCaseType
+
+  def run[P, O](useCaseType: UseCaseType, params: P): Unit = useCaseType match {
+    case ShowBooks =>
+      // Implement logic to show books
+      println(s"Showing books with params: $params")
+  }

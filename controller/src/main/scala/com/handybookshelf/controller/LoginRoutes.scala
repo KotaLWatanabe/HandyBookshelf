@@ -6,7 +6,7 @@ import cats.syntax.all.*
 import akka.actor.typed.ActorSystem
 import akka.util.Timeout
 import controller.actors.{SupervisorActor, UserAccountActorUtil}
-import com.handybookshelf.domain.UserAccountId
+import com.handybookshelf.util.domain.UserAccountId
 import org.http4s.HttpRoutes
 import sttp.tapir.server.http4s.Http4sServerInterpreter
 import scala.concurrent.duration.*

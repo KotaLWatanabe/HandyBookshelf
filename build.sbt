@@ -85,8 +85,7 @@ lazy val adopter = (project in file("adopter"))
 
 lazy val usecase = (project in file("usecase"))
   .settings(
-    commonSettings,
-    libraryDependencies += Libraries.atnosEff
+    commonSettings
   )
   .dependsOn(util, domain, adopter, infrastructure)
 

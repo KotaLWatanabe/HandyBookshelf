@@ -1,5 +1,4 @@
-package com.handybookshelf
-package domain
+package com.handybookshelf package domain
 
 trait DomainError:
   def message: String

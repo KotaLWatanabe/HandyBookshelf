@@ -1,5 +1,4 @@
-package com.handybookshelf
-package controller.config
+package com.handybookshelf package controller.config
 
 import scala.concurrent.duration.*
 

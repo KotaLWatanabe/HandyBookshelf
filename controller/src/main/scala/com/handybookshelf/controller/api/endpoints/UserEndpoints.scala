@@ -1,7 +1,7 @@
 package com.handybookshelf
 package controller.api.endpoints
 
-import com.handybookshelf.controller.User
+import util.controller.User
 import io.circe.generic.semiauto.*
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.*

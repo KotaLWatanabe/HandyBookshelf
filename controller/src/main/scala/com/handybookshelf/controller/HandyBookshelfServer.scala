@@ -4,12 +4,14 @@ package controller
 import cats.effect.{Async, Resource}
 import cats.syntax.all.*
 import com.comcast.ip4s.*
+
 import fs2.io.net.Network
 import org.http4s.ember.client.EmberClientBuilder
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.implicits.*
 import org.http4s.server.middleware.Logger
-import actors.SupervisorActorUtil
+
+import controller.actors.SupervisorActorUtil
 
 object HandyBookshelfServer:
   def run[F[_]: {Async, Network}]: F[Nothing] = {
@@ -42,7 +44,7 @@ object HandyBookshelfServer:
       ).orNotFound
 
       // With Middlewares in place
-      finalHttpApp = Logger.httpApp(true, true)(httpApp)
+      finalHttpApp = Logger.httpApp(logHeaders = true, logBody = true)(httpApp)
 
       _ <-
         EmberServerBuilder

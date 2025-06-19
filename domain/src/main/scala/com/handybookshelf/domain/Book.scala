@@ -1,7 +1,8 @@
-package com.handybookshelf
+package  com.handybookshelf
 package domain
 
 import cats.data.NonEmptyList
+import com.handybookshelf.util.{ISBN, NES, Timestamp}
 
 final case class Book private (id: BookId, title: NES)
 object Book:

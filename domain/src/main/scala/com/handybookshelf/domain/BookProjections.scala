@@ -1,7 +1,7 @@
-package com.handybookshelf
-package domain
+package com.handybookshelf package domain
 
 import cats.effect.IO
+import com.handybookshelf.util.{ISBN, NES, Timestamp, nes}
 
 // Query側のビューモデル
 final case class BookView(

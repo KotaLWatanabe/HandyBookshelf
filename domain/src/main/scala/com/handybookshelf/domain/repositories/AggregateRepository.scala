@@ -1,9 +1,8 @@
-package com.handybookshelf
-package domain
+package com.handybookshelf package domain
 package repositories
 
 import cats.effect.IO
-import com.handybookshelf.infrastructure.EventVersion
+import util.infrastructure.EventVersion
 
 /**
  * 汎用的な集約リポジトリの基底トレイト

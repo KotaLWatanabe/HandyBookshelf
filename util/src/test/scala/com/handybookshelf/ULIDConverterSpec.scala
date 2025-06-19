@@ -1,15 +1,13 @@
-package com.handybookshelf
-
-import TestDataGenerators.*
+package TestDataGenerators.*
+import com.handybookshelf import com.handybookshelf.util.ULIDConverter
 import org.scalacheck.Gen
-import ISBN.*
 import wvlet.airframe.ulid.ULID
 
 class ULIDConverterSpec extends PropertyBasedTestHelpers:
   def genULID: Gen[ULID] = for {
     isbn      <- genValidISBN
     timestamp <- genTimestamp
-  } yield ULIDConverter.generateULID(isbn, timestamp)
+  } yield ULIDConverter.createULID(isbn, timestamp)
 
   describe("ULIDConverter") {
 
@@ -18,21 +16,21 @@ class ULIDConverterSpec extends PropertyBasedTestHelpers:
       checkProperty("should handle valid ISBN strings") {
         Gen.zip(genValidISBN, genTimestamp)
       } { case (isbn, timestamp) =>
-        val ulid = ULIDConverter.generateULID(isbn, timestamp)
+        val ulid = ULIDConverter.createULID(isbn, timestamp)
         ulid != null
       }
 
       checkProperty("should handle invalid ISBN strings") {
         Gen.zip(invalidISBN, genTimestamp)
       } { case (invalidIsbn, timestamp) =>
-        val ulid = ULIDConverter.generateULID(invalidIsbn, timestamp)
+        val ulid = ULIDConverter.createULID(invalidIsbn, timestamp)
         ulid != null
       }
 
       checkProperty("should generate all-zero random part for non-ISBN strings") {
         Gen.zip(invalidISBN, genTimestamp)
       } { case (invalidIsbn, timestamp) =>
-        val ulid       = ULIDConverter.generateULID(invalidIsbn, timestamp)
+        val ulid       = ULIDConverter.createULID(invalidIsbn, timestamp)
         val ulidBytes  = ulid.toBytes
         val randomPart = ulidBytes.drop(6).take(10) // Skip 6-byte timestamp, take 10-byte random part
         randomPart.forall(_ == 0)
@@ -41,8 +39,8 @@ class ULIDConverterSpec extends PropertyBasedTestHelpers:
       checkPropertyWithSeed("should be deterministic with same timestamp and input", 42L) {
         Gen.zip(alphaNumString, genTimestamp)
       } { case (bookCode, timestamp) =>
-        val ulid1 = ULIDConverter.generateULID(bookCode, timestamp)
-        val ulid2 = ULIDConverter.generateULID(bookCode, timestamp)
+        val ulid1 = ULIDConverter.createULID(bookCode, timestamp)
+        val ulid2 = ULIDConverter.createULID(bookCode, timestamp)
         ulid1 == ulid2
       }
     }
@@ -52,7 +50,7 @@ class ULIDConverterSpec extends PropertyBasedTestHelpers:
       checkProperty("should return None for ULID generated without ISBN") {
         Gen.zip(invalidISBN, genTimestamp)
       } { case (invalidIsbn, timestamp) =>
-        val ulid      = ULIDConverter.generateULID(invalidIsbn, timestamp)
+        val ulid      = ULIDConverter.createULID(invalidIsbn, timestamp)
         val extracted = ULIDConverter.extractISBNFromULID(ulid)
         extracted.isEmpty
       }
@@ -70,7 +68,7 @@ class ULIDConverterSpec extends PropertyBasedTestHelpers:
       checkProperty("should return true when comparing with None for non-ISBN ULID") {
         Gen.zip(invalidISBN, genTimestamp)
       } { case (invalidIsbn, timestamp) =>
-        val ulid = ULIDConverter.generateULID(invalidIsbn, timestamp)
+        val ulid = ULIDConverter.createULID(invalidIsbn, timestamp)
         ULIDConverter.isMatchingISBN(ulid, None)
       }
 
@@ -96,7 +94,7 @@ class ULIDConverterSpec extends PropertyBasedTestHelpers:
       checkProperty("should handle empty string") {
         genTimestamp
       } { timestamp =>
-        val ulid      = ULIDConverter.generateULID("", timestamp)
+        val ulid      = ULIDConverter.createULID("", timestamp)
         val extracted = ULIDConverter.extractISBNFromULID(ulid)
         extracted.isEmpty
       }
@@ -105,7 +103,7 @@ class ULIDConverterSpec extends PropertyBasedTestHelpers:
         genTimestamp
       } { timestamp =>
         val longString = "a" * 50
-        val ulid       = ULIDConverter.generateULID(longString, timestamp)
+        val ulid       = ULIDConverter.createULID(longString, timestamp)
         val extracted  = ULIDConverter.extractISBNFromULID(ulid)
         extracted.isEmpty
       }
@@ -113,8 +111,8 @@ class ULIDConverterSpec extends PropertyBasedTestHelpers:
       checkProperty("should be consistent across different random strings") {
         Gen.zip(alphaNumString, genTimestamp)
       } { case (randomStr, timestamp) =>
-        val ulid1 = ULIDConverter.generateULID(randomStr, timestamp)
-        val ulid2 = ULIDConverter.generateULID(randomStr, timestamp)
+        val ulid1 = ULIDConverter.createULID(randomStr, timestamp)
+        val ulid2 = ULIDConverter.createULID(randomStr, timestamp)
         ulid1 == ulid2
       }
     }
@@ -132,7 +130,7 @@ class ULIDConverterSpec extends PropertyBasedTestHelpers:
       checkProperty("Non-ISBN strings should produce None on extraction") {
         Gen.zip(alphaString.suchThat(_.nonEmpty), genTimestamp)
       } { case (nonIsbnStr, timestamp) =>
-        val ulid      = ULIDConverter.generateULID(nonIsbnStr, timestamp)
+        val ulid      = ULIDConverter.createULID(nonIsbnStr, timestamp)
         val extracted = ULIDConverter.extractISBNFromULID(ulid)
         extracted.isEmpty || nonIsbnStr.isbnOpt.isDefined
       }
@@ -140,8 +138,8 @@ class ULIDConverterSpec extends PropertyBasedTestHelpers:
       checkProperty("ULID generation should be consistent for same inputs") {
         Gen.zip(alphaNumString, genTimestamp)
       } { case (input, timestamp) =>
-        val ulid1 = ULIDConverter.generateULID(input, timestamp)
-        val ulid2 = ULIDConverter.generateULID(input, timestamp)
+        val ulid1 = ULIDConverter.createULID(input, timestamp)
+        val ulid2 = ULIDConverter.createULID(input, timestamp)
         // With same timestamp and input, ULIDs should be identical
         ulid1 == ulid2
       }

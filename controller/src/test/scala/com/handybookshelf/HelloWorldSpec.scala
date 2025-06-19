@@ -1,7 +1,5 @@
-package com.handybookshelf
-
-import cats.effect.IO
-import controller.HandyBookshelfRoutes
+package cats.effect.IO
+import com.handybookshelf import controller.HandyBookshelfRoutes
 import org.http4s.*
 import org.http4s.implicits.*
 

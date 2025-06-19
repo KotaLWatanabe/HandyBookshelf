@@ -1,10 +1,9 @@
-package com.handybookshelf
+package handybookshelf.com.handybookshelf
 package adopter
 
 import cats.effect.IO
 import cats.implicits.*
-import ISBN.*
-import domain.Book
+import com.handybookshelf.util.{ISBN, nes}
 import org.http4s.Uri
 import org.http4s.ember.client.EmberClientBuilder
 import org.http4s.implicits.*

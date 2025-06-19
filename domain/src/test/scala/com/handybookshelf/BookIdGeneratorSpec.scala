@@ -1,8 +1,5 @@
-package com.handybookshelf
-
-import cats.effect.IO
-import munit.CatsEffectSuite
-import org.http4s.*
+package cats.effect.IO
+import com.handybookshelf import org.http4s.*
 import org.http4s.implicits.*
 
 class BookIdGeneratorSpec extends AnyFunSpec:

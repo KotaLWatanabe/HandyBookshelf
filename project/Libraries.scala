@@ -76,7 +76,8 @@ object Libraries {
       iron,
       ironCats,
       xml,
-      slf4j
+      slf4j,
+      atnosEff
     ) ++ http4s ++ tapir ++ sttp ++ akka
   val chapter1: Seq[ModuleID] = Seq(catsEffect)
 }

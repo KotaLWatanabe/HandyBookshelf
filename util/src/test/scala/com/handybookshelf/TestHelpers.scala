@@ -1,11 +1,9 @@
-package com.handybookshelf
-
+package com.handybookshelf import com.handybookshelf.util.{ISBN, Timestamp}
 import org.scalacheck.Gen
 import org.scalatest.funspec.{AnyFunSpec, AsyncFunSpec}
 import org.scalatest.matchers.should.Matchers
+
 import scala.concurrent.Future
-import GenUtils.*
-import ISBN.*
 
 trait PropertyBasedTestHelpers extends AnyFunSpec with Matchers:
 

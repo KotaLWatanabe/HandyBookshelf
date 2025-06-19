@@ -1,5 +1,4 @@
-package com.handybookshelf
-package controller
+package com.handybookshelf package controller
 
 import cats.effect.*
 import com.comcast.ip4s.*

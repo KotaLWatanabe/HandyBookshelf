@@ -1,8 +1,5 @@
-package com.handybookshelf
-
-import TestDataGenerators.*
-import GenUtils.*
-
+package TestDataGenerators.*
+import com.handybookshelf
 class ExamplePropertyBasedTest extends PropertyBasedTestHelpers:
 
   describe("ISBN validation examples") {

@@ -1,4 +1,4 @@
-package com.handybookshelf
+package handybookshelf.com.handybookshelf
 package controller.config
 
 import cats.effect.{IO, Resource}

@@ -1,8 +1,7 @@
-package com.handybookshelf
-package infrastructure
+package com.handybookshelf package infrastructure
 
 import cats.effect.IO
-import com.handybookshelf.Timestamp
+import util.Timestamp
 
 final case class StreamId(value: String) extends AnyVal
 

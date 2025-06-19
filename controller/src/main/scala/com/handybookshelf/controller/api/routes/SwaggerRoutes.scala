@@ -1,5 +1,4 @@
-package com.handybookshelf
-package controller.api.routes
+package com.handybookshelf package controller.api.routes
 
 import cats.effect.IO
 import controller.api.endpoints.UserEndpoints

@@ -1,7 +1,7 @@
-package com.handybookshelf
-
+package handybookshelf.com.handybookshelf
 import org.scalacheck.Gen
 import org.scalacheck.rng.Seed
+
 import scala.util.Random
 
 object GenUtils:

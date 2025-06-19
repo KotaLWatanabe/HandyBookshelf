@@ -1,6 +1,6 @@
-package com.handybookshelf
-package domain
+package com.handybookshelf package domain
 
+import com.handybookshelf.util.Timestamp
 import wvlet.airframe.ulid.ULID
 
 final case class DomainEventError(message: String, cause: Option[Throwable]) extends DomainError

@@ -1,6 +1,6 @@
-package com.handybookshelf
-package domain
+package com.handybookshelf package domain
 
+import com.handybookshelf.util.{ISBN, Timestamp, ULIDConverter}
 import wvlet.airframe.ulid.ULID
 
 final case class BookId private (private val value: ULID):
@@ -11,10 +11,10 @@ object BookId:
       bookCode: String,
       timestamp: Timestamp
   ): BookId =
-    BookId(ULIDConverter.generateULID(bookCode, timestamp))
+    BookId(ULIDConverter.createULID(bookCode, timestamp))
 
   def generateFromISBN(
       isbn: ISBN,
       timestamp: Timestamp
   ): BookId =
-    BookId(ULIDConverter.generateULIDFromISBN(isbn, timestamp))
+    BookId(ULIDConverter.createULIDFromISBN(isbn, timestamp))
