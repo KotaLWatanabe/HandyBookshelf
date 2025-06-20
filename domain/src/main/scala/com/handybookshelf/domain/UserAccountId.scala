@@ -1,10 +1,13 @@
-package com.handybookshelf package domain
+package com.handybookshelf
+package domain
 
+import cats.effect.IO
+import com.handybookshelf.util.ULIDGen
 import wvlet.airframe.ulid.ULID
 
 final case class UserAccountId private (private val value: ULID) extends AnyVal {
-//  def breachEncapsulationAsString: String = value.toString
+  def breachEncapsulationAsString: String = value.toString
 }
 object UserAccountId {
-  def create(): UserAccountId = new UserAccountId(ULID.newULID)
+  def create(): IO[UserAccountId] = ULIDGen.generate.map(UserAccountId.apply)
 }

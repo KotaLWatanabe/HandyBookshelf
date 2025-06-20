@@ -1,6 +1,7 @@
-package com.handybookshelf package domain
+package com.handybookshelf 
+package domain
 
-import com.handybookshelf.util.{ISBN, NES, Timestamp}
+import com.handybookshelf.util.{ISBN, Timestamp}
 
 // Temporarily commented out for compilation
 // import com.handybookshelf.infrastructure.EventVersion

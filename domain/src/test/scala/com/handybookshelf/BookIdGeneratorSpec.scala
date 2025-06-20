@@ -1,11 +1,12 @@
-package cats.effect.IO
-import com.handybookshelf import org.http4s.*
+package com.handybookshelf
+
+import org.http4s.*
 import org.http4s.implicits.*
 
 class BookIdGeneratorSpec extends AnyFunSpec:
 
   test("HelloWorld returns status code 200") {
-    assertIO(retHelloWorld.map(_.status) ,Status.Ok)
+    assertIO(retHelloWorld.map(_.status), Status.Ok)
   }
 
   test("HelloWorld returns hello world message") {
@@ -13,6 +14,6 @@ class BookIdGeneratorSpec extends AnyFunSpec:
   }
 
   private[this] lazy val retHelloWorld: IO[Response[IO]] =
-    val getHW = Request[IO](Method.GET, uri"/hello/world")
+    val getHW      = Request[IO](Method.GET, uri"/hello/world")
     val helloWorld = HelloWorld.impl[IO]
     LeastbookshelfRoutes.helloWorldRoutes(helloWorld).orNotFound(getHW)

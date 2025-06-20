@@ -1,4 +1,5 @@
-package com.handybookshelf package domain
+package com.handybookshelf 
+package domain
 
 trait BookSorter:
   def compare: (BookReference, BookReference) => Int

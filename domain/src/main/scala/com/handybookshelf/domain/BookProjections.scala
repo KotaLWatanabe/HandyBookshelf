@@ -1,7 +1,8 @@
-package com.handybookshelf package domain
+package com.handybookshelf
+package domain
 
 import cats.effect.IO
-import com.handybookshelf.util.{ISBN, NES, Timestamp, nes}
+import com.handybookshelf.util.{ISBN, Timestamp}
 
 // Query側のビューモデル
 final case class BookView(
@@ -45,7 +46,7 @@ class BookViewProjection extends Projection[BookView]:
 
   def apply(event: DomainEvent): IO[Unit] = event match
     case event: BookEvent => handleBookEvent(event)
-    case _ => IO.unit
+    case _                => IO.unit
 
   def getView(id: String): IO[Option[BookView]] =
     IO.pure(views.get(id))
@@ -57,8 +58,8 @@ class BookViewProjection extends Projection[BookView]:
     val bookId = event.bookId.toString
     val updatedView = views.get(bookId) match
       case Some(view) => updateView(view, event)
-      case None => createViewFromEvent(event)
-    
+      case None       => createViewFromEvent(event)
+
     IO {
       views = views.updated(bookId, updatedView)
     }
@@ -80,46 +81,48 @@ class BookViewProjection extends Projection[BookView]:
   private def updateView(view: BookView, event: BookEvent): BookView = event match
     case BookLocationChanged(_, _, _, newLocation, _, timestamp) =>
       view.copy(location = Some(newLocation), lastModified = timestamp)
-    
+
     case BookTagAdded(_, _, tag, _, timestamp) =>
       view.copy(tags = view.tags + tag, lastModified = timestamp)
-    
+
     case BookTagRemoved(_, _, tag, _, timestamp) =>
       view.copy(tags = view.tags - tag, lastModified = timestamp)
-    
+
     case BookDeviceAdded(_, _, device, _, timestamp) =>
       view.copy(devices = view.devices + device, lastModified = timestamp)
-    
+
     case BookDeviceRemoved(_, _, device, _, timestamp) =>
       view.copy(devices = view.devices - device, lastModified = timestamp)
-    
+
     case BookTitleUpdated(_, _, _, newTitle, _, timestamp) =>
       view.copy(title = newTitle, lastModified = timestamp)
-    
+
     case BookRemoved(_, _, _, timestamp) =>
       view.copy(isDeleted = true, lastModified = timestamp)
-    
+
     case _ => view
 
 // Location別ビューProjection
 class LocationViewProjection(bookViewProjection: BookViewProjection) extends Projection[LocationView]:
-  
+
   def apply(event: DomainEvent): IO[Unit] = event match
     case _: BookLocationChanged => IO.unit // BookViewProjectionが先に更新されるので、特に処理不要
-    case _ => IO.unit
+    case _                      => IO.unit
 
   def getView(locationName: String): IO[Option[LocationView]] =
     for {
       allBooks <- bookViewProjection.getAllViews()
       booksAtLocation = allBooks
         .filter(_.location.exists(loc => loc.name.toString == locationName))
-        .map(view => BookSummary(
-          id = view.id,
-          title = view.title,
-          location = view.location,
-          tagCount = view.tags.size,
-          deviceCount = view.devices.size
-        ))
+        .map(view =>
+          BookSummary(
+            id = view.id,
+            title = view.title,
+            location = view.location,
+            tagCount = view.tags.size,
+            deviceCount = view.devices.size
+          )
+        )
     } yield {
       if (booksAtLocation.nonEmpty)
         Some(LocationView(Location(locationName.nes), booksAtLocation))
@@ -136,13 +139,18 @@ class LocationViewProjection(bookViewProjection: BookViewProjection) extends Pro
         .map { case (location, books) =>
           LocationView(
             location = location,
-            books = books.map(_._2).map(view => BookSummary(
-              id = view.id,
-              title = view.title,
-              location = view.location,
-              tagCount = view.tags.size,
-              deviceCount = view.devices.size
-            )).toList
+            books = books
+              .map(_._2)
+              .map(view =>
+                BookSummary(
+                  id = view.id,
+                  title = view.title,
+                  location = view.location,
+                  tagCount = view.tags.size,
+                  deviceCount = view.devices.size
+                )
+              )
+              .toList
           )
         }
         .toList
@@ -150,23 +158,25 @@ class LocationViewProjection(bookViewProjection: BookViewProjection) extends Pro
 
 // Tag別ビューProjection
 class TagViewProjection(bookViewProjection: BookViewProjection) extends Projection[TagView]:
-  
+
   def apply(event: DomainEvent): IO[Unit] = event match
     case _: BookTagAdded | _: BookTagRemoved => IO.unit
-    case _ => IO.unit
+    case _                                   => IO.unit
 
   def getView(tagName: String): IO[Option[TagView]] =
     for {
       allBooks <- bookViewProjection.getAllViews()
       booksWithTag = allBooks
         .filter(_.tags.exists(_.name == tagName))
-        .map(view => BookSummary(
-          id = view.id,
-          title = view.title,
-          location = view.location,
-          tagCount = view.tags.size,
-          deviceCount = view.devices.size
-        ))
+        .map(view =>
+          BookSummary(
+            id = view.id,
+            title = view.title,
+            location = view.location,
+            tagCount = view.tags.size,
+            deviceCount = view.devices.size
+          )
+        )
     } yield {
       if (booksWithTag.nonEmpty)
         Some(TagView(Tag(tagName), booksWithTag))
@@ -183,13 +193,18 @@ class TagViewProjection(bookViewProjection: BookViewProjection) extends Projecti
         .map { case (tag, books) =>
           TagView(
             tag = tag,
-            books = books.map(_._2).map(view => BookSummary(
-              id = view.id,
-              title = view.title,
-              location = view.location,
-              tagCount = view.tags.size,
-              deviceCount = view.devices.size
-            )).toList
+            books = books
+              .map(_._2)
+              .map(view =>
+                BookSummary(
+                  id = view.id,
+                  title = view.title,
+                  location = view.location,
+                  tagCount = view.tags.size,
+                  deviceCount = view.devices.size
+                )
+              )
+              .toList
           )
         }
         .toList
@@ -210,8 +225,8 @@ class ProjectionManager(
 
 object ProjectionManager:
   def create(): ProjectionManager =
-    val bookViewProjection = new BookViewProjection()
+    val bookViewProjection     = new BookViewProjection()
     val locationViewProjection = new LocationViewProjection(bookViewProjection)
-    val tagViewProjection = new TagViewProjection(bookViewProjection)
-    
+    val tagViewProjection      = new TagViewProjection(bookViewProjection)
+
     new ProjectionManager(bookViewProjection, locationViewProjection, tagViewProjection)

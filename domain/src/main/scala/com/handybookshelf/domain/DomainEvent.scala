@@ -1,4 +1,5 @@
-package com.handybookshelf package domain
+package com.handybookshelf 
+package domain
 
 import com.handybookshelf.util.Timestamp
 import wvlet.airframe.ulid.ULID

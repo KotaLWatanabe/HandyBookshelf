@@ -1,6 +1,5 @@
-package com.handybookshelf package domain
+package com.handybookshelf
+package domain
 
-import util.infrastructure.StoredEvent
-
-trait StoredDomainEvent extends StoredEvent:
-  override type E <: DomainEvent
+trait StoredDomainEvent:
+  type E <: DomainEvent

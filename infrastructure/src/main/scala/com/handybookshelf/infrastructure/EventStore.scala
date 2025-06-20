@@ -1,4 +1,5 @@
-package com.handybookshelf package infrastructure
+package com.handybookshelf 
+package infrastructure
 
 import cats.effect.IO
 import util.Timestamp
@@ -79,7 +80,8 @@ class InMemoryEventStore extends EventStore:
         currentMetadata <- getStreamMetadata(streamId)
         _               <- validateVersion(currentMetadata, expectedVersion)
         newVersion  = currentMetadata.map(_.version.next).getOrElse(EventVersion.init)
-        newMetadata = StreamMetadata(streamId, newVersion, Timestamp.now())
+        timestamp <- Timestamp.now
+        newMetadata = StreamMetadata(streamId, newVersion, timestamp)
         _ <- IO {
           store = store.updated(streamId, events ++ store.getOrElse(streamId, List.empty))
           metadata = metadata.updated(streamId, newMetadata)

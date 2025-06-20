@@ -1,8 +1,9 @@
-package com.handybookshelf package domain
+package com.handybookshelf 
+package domain
 package repositories
 
 import cats.effect.IO
-import com.handybookshelf.util.{ISBN, Timestamp}
+import util.{ISBN, Timestamp}
 
 /**
  * Book集約専用リポジトリインターフェース

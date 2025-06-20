@@ -75,7 +75,7 @@ lazy val domain = (project in file("domain"))
   .settings(
     commonSettings
   )
-  .dependsOn(util, infrastructure)
+  .dependsOn(util)
 
 lazy val adopter = (project in file("adopter"))
   .settings(
