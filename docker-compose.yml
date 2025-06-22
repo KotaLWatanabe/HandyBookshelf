@@ -11,7 +11,7 @@ services:
       - "10000:10000"  # REST API port
     volumes:
       - scylla_data:/var/lib/scylla
-      - ./docker/scylla/init.cql:/docker-entrypoint-initdb.d/init.cql:ro
+      - ./project/flyway:/docker-entrypoint-initdb.d:ro
     environment:
       - SCYLLA_CLUSTER_NAME=HandyBookshelfCluster
     healthcheck:

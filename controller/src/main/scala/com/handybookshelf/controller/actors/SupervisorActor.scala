@@ -246,6 +246,16 @@ object SupervisorActor:
               true
             case None => false
         }
+        
+        def validateSessionForUser(sessionId: String, requestedUserAccountId: UserAccountId): Boolean = {
+          // Verify that the session belongs to the requested user
+          if (requestedUserAccountId == userAccountId) {
+            validateSession(sessionId)
+          } else {
+            // Session does not belong to the requested user
+            false
+          }
+        }
       }
       
       val bookshelfActor = context.spawn(

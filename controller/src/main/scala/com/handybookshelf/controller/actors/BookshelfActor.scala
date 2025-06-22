@@ -57,15 +57,33 @@ object BookshelfActor:
   // Events
   sealed trait BookshelfEvent
   final case class BookAddedToShelf(
+    userAccountId: UserAccountId,
     bookId: BookId, 
     bookReference: BookReference, 
     filters: Filters
   ) extends BookshelfEvent
   
-  final case class BookRemovedFromShelf(bookId: BookId) extends BookshelfEvent
-  final case class SorterChanged(newSorter: BookSorter) extends BookshelfEvent
-  final case class FilterAddedToBook(bookId: BookId, filter: domain.Filter) extends BookshelfEvent
-  final case class FilterRemovedFromBook(bookId: BookId, filter: domain.Filter) extends BookshelfEvent
+  final case class BookRemovedFromShelf(
+    userAccountId: UserAccountId,
+    bookId: BookId
+  ) extends BookshelfEvent
+  
+  final case class SorterChanged(
+    userAccountId: UserAccountId,
+    newSorter: BookSorter
+  ) extends BookshelfEvent
+  
+  final case class FilterAddedToBook(
+    userAccountId: UserAccountId,
+    bookId: BookId, 
+    filter: domain.Filter
+  ) extends BookshelfEvent
+  
+  final case class FilterRemovedFromBook(
+    userAccountId: UserAccountId,
+    bookId: BookId, 
+    filter: domain.Filter
+  ) extends BookshelfEvent
   
   // Responses
   sealed trait BookshelfResponse
@@ -88,6 +106,7 @@ object BookshelfActor:
   // Session validation interface
   trait SessionValidator:
     def validateSession(sessionId: String): Boolean
+    def validateSessionForUser(sessionId: String, userAccountId: UserAccountId): Boolean
   
   // JSON codecs for persistence
   given Encoder[BookshelfEvent] = deriveEncoder
@@ -109,97 +128,97 @@ object BookshelfActor:
   ): ReplyEffect[BookshelfEvent, BookshelfState] =
     command match
       case AddBookToShelf(bookId, bookReference, filters, sessionId, replyTo) =>
-        if !sessionValidator.validateSession(sessionId) then
+        if !sessionValidator.validateSessionForUser(sessionId, state.userAccountId) then
           Effect.reply(replyTo)(BookOperationResponse(
             success = false, 
-            message = "Invalid session - user must be logged in"
+            message = "Invalid session - user must be logged in or session does not belong to this user"
           ))
         else
           Effect
-            .persist(BookAddedToShelf(bookId, bookReference, filters))
+            .persist(BookAddedToShelf(state.userAccountId, bookId, bookReference, filters))
             .thenReply(replyTo)(_ => BookOperationResponse(
               success = true, 
-              message = s"Book ${bookId.toString} added to shelf successfully"
+              message = s"Book ${bookId.toString} added to shelf for user ${state.userAccountId.toString} successfully"
             ))
       
       case RemoveBookFromShelf(bookId, sessionId, replyTo) =>
-        if !sessionValidator.validateSession(sessionId) then
+        if !sessionValidator.validateSessionForUser(sessionId, state.userAccountId) then
           Effect.reply(replyTo)(BookOperationResponse(
             success = false, 
-            message = "Invalid session - user must be logged in"
+            message = "Invalid session - user must be logged in or session does not belong to this user"
           ))
         else if !state.bookshelf.books.contains(bookId) then
           Effect.reply(replyTo)(BookOperationResponse(
             success = false, 
-            message = s"Book ${bookId.toString} not found in shelf"
+            message = s"Book ${bookId.toString} not found in shelf for user ${state.userAccountId.toString}"
           ))
         else
           Effect
-            .persist(BookRemovedFromShelf(bookId))
+            .persist(BookRemovedFromShelf(state.userAccountId, bookId))
             .thenReply(replyTo)(_ => BookOperationResponse(
               success = true, 
-              message = s"Book ${bookId.toString} removed from shelf successfully"
+              message = s"Book ${bookId.toString} removed from shelf for user ${state.userAccountId.toString} successfully"
             ))
       
       case GetBookshelf(sessionId, replyTo) =>
-        if !sessionValidator.validateSession(sessionId) then
+        if !sessionValidator.validateSessionForUser(sessionId, state.userAccountId) then
           Effect.reply(replyTo)(BookOperationResponse(
             success = false, 
-            message = "Invalid session - user must be logged in"
+            message = "Invalid session - user must be logged in or session does not belong to this user"
           ))
         else
           Effect.reply(replyTo)(BookshelfViewResponse(state.bookshelf))
       
       case ChangeSorter(newSorter, sessionId, replyTo) =>
-        if !sessionValidator.validateSession(sessionId) then
+        if !sessionValidator.validateSessionForUser(sessionId, state.userAccountId) then
           Effect.reply(replyTo)(BookOperationResponse(
             success = false, 
-            message = "Invalid session - user must be logged in"
+            message = "Invalid session - user must be logged in or session does not belong to this user"
           ))
         else
           Effect
-            .persist(SorterChanged(newSorter))
+            .persist(SorterChanged(state.userAccountId, newSorter))
             .thenReply(replyTo)(_ => BookOperationResponse(
               success = true, 
-              message = "Sorter changed successfully"
+              message = s"Sorter changed successfully for user ${state.userAccountId.toString}"
             ))
       
       case AddFilterToBook(bookId, filter, sessionId, replyTo) =>
-        if !sessionValidator.validateSession(sessionId) then
+        if !sessionValidator.validateSessionForUser(sessionId, state.userAccountId) then
           Effect.reply(replyTo)(BookOperationResponse(
             success = false, 
-            message = "Invalid session - user must be logged in"
+            message = "Invalid session - user must be logged in or session does not belong to this user"
           ))
         else if !state.bookshelf.books.contains(bookId) then
           Effect.reply(replyTo)(BookOperationResponse(
             success = false, 
-            message = s"Book ${bookId.toString} not found in shelf"
+            message = s"Book ${bookId.toString} not found in shelf for user ${state.userAccountId.toString}"
           ))
         else
           Effect
-            .persist(FilterAddedToBook(bookId, filter))
+            .persist(FilterAddedToBook(state.userAccountId, bookId, filter))
             .thenReply(replyTo)(_ => BookOperationResponse(
               success = true, 
-              message = s"Filter added to book ${bookId.toString} successfully"
+              message = s"Filter added to book ${bookId.toString} for user ${state.userAccountId.toString} successfully"
             ))
       
       case RemoveFilterFromBook(bookId, filter, sessionId, replyTo) =>
-        if !sessionValidator.validateSession(sessionId) then
+        if !sessionValidator.validateSessionForUser(sessionId, state.userAccountId) then
           Effect.reply(replyTo)(BookOperationResponse(
             success = false, 
-            message = "Invalid session - user must be logged in"
+            message = "Invalid session - user must be logged in or session does not belong to this user"
           ))
         else if !state.bookshelf.books.contains(bookId) then
           Effect.reply(replyTo)(BookOperationResponse(
             success = false, 
-            message = s"Book ${bookId.toString} not found in shelf"
+            message = s"Book ${bookId.toString} not found in shelf for user ${state.userAccountId.toString}"
           ))
         else
           Effect
-            .persist(FilterRemovedFromBook(bookId, filter))
+            .persist(FilterRemovedFromBook(state.userAccountId, bookId, filter))
             .thenReply(replyTo)(_ => BookOperationResponse(
               success = true, 
-              message = s"Filter removed from book ${bookId.toString} successfully"
+              message = s"Filter removed from book ${bookId.toString} for user ${state.userAccountId.toString} successfully"
             ))
       
       case Shutdown =>
@@ -207,21 +226,48 @@ object BookshelfActor:
   
   private def eventHandler(state: BookshelfState, event: BookshelfEvent): BookshelfState =
     event match
-      case BookAddedToShelf(bookId, bookReference, filters) =>
-        state.copy(bookshelf = state.bookshelf.addBook(bookReference, filters, bookId))
+      case BookAddedToShelf(userAccountId, bookId, bookReference, filters) =>
+        // Verify event belongs to this user
+        if (userAccountId == state.userAccountId) {
+          state.copy(bookshelf = state.bookshelf.addBook(bookReference, filters, bookId))
+        } else {
+          // Log error but don't change state for security
+          println(s"WARNING: BookAddedToShelf event for wrong user. Expected: ${state.userAccountId}, Got: $userAccountId")
+          state
+        }
       
-      case BookRemovedFromShelf(bookId) =>
-        val updatedBooks = state.bookshelf.books - bookId
-        state.copy(bookshelf = Bookshelf(updatedBooks, state.bookshelf.sorter))
+      case BookRemovedFromShelf(userAccountId, bookId) =>
+        if (userAccountId == state.userAccountId) {
+          val updatedBooks = state.bookshelf.books - bookId
+          state.copy(bookshelf = Bookshelf(updatedBooks, state.bookshelf.sorter))
+        } else {
+          println(s"WARNING: BookRemovedFromShelf event for wrong user. Expected: ${state.userAccountId}, Got: $userAccountId")
+          state
+        }
       
-      case SorterChanged(newSorter) =>
-        state.copy(bookshelf = state.bookshelf.changeSorter(newSorter))
+      case SorterChanged(userAccountId, newSorter) =>
+        if (userAccountId == state.userAccountId) {
+          state.copy(bookshelf = state.bookshelf.changeSorter(newSorter))
+        } else {
+          println(s"WARNING: SorterChanged event for wrong user. Expected: ${state.userAccountId}, Got: $userAccountId")
+          state
+        }
       
-      case FilterAddedToBook(bookId, filter) =>
-        state.copy(bookshelf = state.bookshelf.addFilter(filter, bookId))
+      case FilterAddedToBook(userAccountId, bookId, filter) =>
+        if (userAccountId == state.userAccountId) {
+          state.copy(bookshelf = state.bookshelf.addFilter(filter, bookId))
+        } else {
+          println(s"WARNING: FilterAddedToBook event for wrong user. Expected: ${state.userAccountId}, Got: $userAccountId")
+          state
+        }
       
-      case FilterRemovedFromBook(bookId, filter) =>
-        state.copy(bookshelf = state.bookshelf.removeFilter(filter, bookId))
+      case FilterRemovedFromBook(userAccountId, bookId, filter) =>
+        if (userAccountId == state.userAccountId) {
+          state.copy(bookshelf = state.bookshelf.removeFilter(filter, bookId))
+        } else {
+          println(s"WARNING: FilterRemovedFromBook event for wrong user. Expected: ${state.userAccountId}, Got: $userAccountId")
+          state
+        }
 
 /**
  * Bookshelf Actor utility methods
