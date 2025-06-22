@@ -4,7 +4,7 @@ import io.circe.{Decoder, Encoder}
 import scala.compiletime.{error, requireConst}
 
 package object handybookshelf:
-  opaque type NonEmptyString = String
+  opaque type NonEmptyString <: String = String
   object NonEmptyString:
     def apply(s: String): Option[NonEmptyString] =
       if s.isEmpty then None else Some(s)
@@ -21,18 +21,12 @@ package object handybookshelf:
     inline def apply(nes: NonEmptyString): String = nes
 
   type NES = NonEmptyString
-//    String :|
-//    DescribedAs[MinLength[
-//      1
-//    ], """NES (Non-empty String) must have at least 1characters."""]
-
-
 
   extension (str: String) {
-    def nes: NonEmptyString = NonEmptyString.unsafeNonEmptyString(str)
+    def nes: NES = NonEmptyString.unsafeNonEmptyString(str)
     def nesOpt: Option[NES] = NonEmptyString(str)
   }
 
   // Circe codecs for NES
-  given Encoder[NES] = Encoder.encodeString.contramap(_.toString)
+  given Encoder[NES] = Encoder.encodeString.contramap(identity)
   given Decoder[NES] = Decoder.decodeString.map(_.nes)

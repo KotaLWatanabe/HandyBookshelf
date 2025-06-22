@@ -97,9 +97,9 @@ trait TestDataGenerators:
 
   def stringOfN(n: Int): Gen[NES] = Gen.listOfN(n, Gen.alphaNumChar).map(_.mkString.nes)
 
-  def isbnDigits10: Gen[String] = Gen.listOfN(10, Gen.numChar).map(_.mkString)
+  def isbnDigits10: Gen[NES] = Gen.listOfN(10, Gen.numChar).map(_.mkString.nes)
 
-  def isbnDigits13: Gen[String] = Gen.listOfN(13, Gen.numChar).map(_.mkString)
+  def isbnDigits13: Gen[NES] = Gen.listOfN(13, Gen.numChar).map(_.mkString.nes)
 
   def genValidISBN: Gen[ISBN] = Gen.oneOf(isbnDigits10, isbnDigits13).map(_.isbnOpt.get)
 

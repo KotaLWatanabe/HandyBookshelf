@@ -1,7 +1,6 @@
 package com.handybookshelf
 package util
 
-import util.ISBN.*
 import wvlet.airframe.ulid.ULID
 
 import java.nio.charset.StandardCharsets
@@ -18,7 +17,7 @@ object ULIDConverter:
   }
 
   def createULID(bookCode: NES, timestamp: Timestamp): ULID =
-    bookCode.str.isbnOpt match {
+    bookCode.isbnOpt match {
       case Some(isbn: ISBN) => createULIDFromISBN(isbn, timestamp)
       case None             =>
         // ISBNがない場合は完全ランダムな値
@@ -46,11 +45,10 @@ object ULIDConverter:
     val ulidBytes = ulid.toBytes
     // Skip the first 6 bytes (timestamp) and take the next 10 bytes (random/ISBN part)
     val randomPart = ulidBytes.slice(6, 16)
-    if (randomPart.forall(_ == 0)) {
+    if (randomPart.forall(_ == 0))
       None // ランダム部分がゼロの場合はISBNなしと判定
-    } else {
-      new String(randomPart.takeWhile(_ != 0), StandardCharsets.UTF_8).isbnOpt
-    }
+    else
+      new String(randomPart.takeWhile(_ != 0), StandardCharsets.UTF_8).nes.isbnOpt
   }
 
   // 一致判定
