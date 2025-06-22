@@ -1,16 +1,10 @@
-package TestDataGenerators.*
-import com.handybookshelf import com.handybookshelf.util.ULIDConverter
+package com.handybookshelf
+package util
+
 import org.scalacheck.Gen
-import wvlet.airframe.ulid.ULID
 
 class ULIDConverterSpec extends PropertyBasedTestHelpers:
-  def genULID: Gen[ULID] = for {
-    isbn      <- genValidISBN
-    timestamp <- genTimestamp
-  } yield ULIDConverter.createULID(isbn, timestamp)
-
   describe("ULIDConverter") {
-
     describe("generateULID") {
 
       checkProperty("should handle valid ISBN strings") {
@@ -32,7 +26,7 @@ class ULIDConverterSpec extends PropertyBasedTestHelpers:
       } { case (invalidIsbn, timestamp) =>
         val ulid       = ULIDConverter.createULID(invalidIsbn, timestamp)
         val ulidBytes  = ulid.toBytes
-        val randomPart = ulidBytes.drop(6).take(10) // Skip 6-byte timestamp, take 10-byte random part
+        val randomPart = ulidBytes.slice(6, 16) // Skip 6-byte timestamp, take 10-byte random part
         randomPart.forall(_ == 0)
       }
 
@@ -132,7 +126,7 @@ class ULIDConverterSpec extends PropertyBasedTestHelpers:
       } { case (nonIsbnStr, timestamp) =>
         val ulid      = ULIDConverter.createULID(nonIsbnStr, timestamp)
         val extracted = ULIDConverter.extractISBNFromULID(ulid)
-        extracted.isEmpty || nonIsbnStr.isbnOpt.isDefined
+        extracted.isEmpty
       }
 
       checkProperty("ULID generation should be consistent for same inputs") {

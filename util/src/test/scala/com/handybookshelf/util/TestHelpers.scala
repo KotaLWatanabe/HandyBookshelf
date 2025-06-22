@@ -1,13 +1,16 @@
 package com.handybookshelf
-import com.handybookshelf.util.{ISBN, Timestamp}
+package util
+
+import util.{ISBN, Timestamp}
 import org.scalacheck.Gen
 import org.scalatest.funspec.{AnyFunSpec, AsyncFunSpec}
 import org.scalatest.matchers.should.Matchers
+import ISBN.*
+import wvlet.airframe.ulid.ULID
 
 import scala.concurrent.Future
 
-trait PropertyBasedTestHelpers extends AnyFunSpec with Matchers:
-
+trait PropertyBasedTestHelpers extends AnyFunSpec with Matchers with TestDataGenerators with GenUtils:
   // 同期版プロパティテスト
   def checkProperty[A](description: String)(gen: Gen[A])(predicate: A => Boolean): Unit =
     it(description) {
@@ -35,7 +38,7 @@ trait PropertyBasedTestHelpers extends AnyFunSpec with Matchers:
       }
     }
 
-  def checkBinaryProperty[A, B](description: String)(genA: Gen[A])(genB: Gen[B])(predicate: (A, B) => Boolean): Unit =
+  def checkBinaryProperty[A, B](description: String)(genA: Gen[A], genB: Gen[B])(predicate: (A, B) => Boolean): Unit =
     it(description) {
       val sampleA = genA.sampleOne
       val sampleB = genB.sampleOne
@@ -44,15 +47,7 @@ trait PropertyBasedTestHelpers extends AnyFunSpec with Matchers:
       }
     }
 
-  def expectGenerated[A](description: String)(gen: Gen[A])(expectation: A => Unit): Unit =
-    it(description) {
-      val sample = gen.sampleOne
-      withClue(s"Generated value: $sample") {
-        expectation(sample)
-      }
-    }
-
-trait AsyncPropertyBasedTestHelpers extends AsyncFunSpec with Matchers:
+trait AsyncPropertyBasedTestHelpers extends AsyncFunSpec with Matchers with TestDataGenerators with GenUtils:
   // 非同期版プロパティテスト
   def checkPropertyAsync[A](description: String)(gen: Gen[A])(predicate: A => Future[Boolean]): Unit =
     it(description) {
@@ -66,10 +61,10 @@ trait AsyncPropertyBasedTestHelpers extends AsyncFunSpec with Matchers:
 
   def checkPropertyWithSeedAsync[A](description: String, seed: Long)(
       gen: Gen[A]
-  )(predicate: A => Future[Boolean]): Unit =
+  )(predicateF: A => Future[Boolean]): Unit =
     it(s"$description (seed: $seed)") {
       val sample = gen.sampleWithSeed(seed)
-      predicate(sample).map { result =>
+      predicateF(sample).map { result =>
         withClue(s"Failed for generated value: $sample (seed: $seed)") {
           result.shouldBe(true)
         }
@@ -78,11 +73,11 @@ trait AsyncPropertyBasedTestHelpers extends AsyncFunSpec with Matchers:
 
   def checkPropertyMultipleAsync[A](description: String, count: Int = 10)(
       gen: Gen[A]
-  )(predicate: A => Future[Boolean]): Unit =
+  )(predicateF: A => Future[Boolean]): Unit =
     it(s"$description (${count}x samples)") {
       val samples = gen.sampleStream(count)
       val futures = samples.zipWithIndex.map { case (sample, index) =>
-        predicate(sample).map { result =>
+        predicateF(sample).map { result =>
           withClue(s"Failed for sample #${index + 1}: $sample") {
             result.shouldBe(true)
           }
@@ -93,30 +88,22 @@ trait AsyncPropertyBasedTestHelpers extends AsyncFunSpec with Matchers:
 
   def checkBinaryPropertyAsync[A, B](
       description: String
-  )(genA: Gen[A])(genB: Gen[B])(predicate: (A, B) => Future[Boolean]): Unit =
+  )(genA: Gen[A], genB: Gen[B])(predicateF: (A, B) => Future[Boolean]): Unit =
     it(description) {
       val sampleA = genA.sampleOne
       val sampleB = genB.sampleOne
-      predicate(sampleA, sampleB).map { result =>
+      predicateF(sampleA, sampleB).map { result =>
         withClue(s"Failed for generated values: A=$sampleA, B=$sampleB") {
           result.shouldBe(true)
         }
       }
     }
 
-  def expectGeneratedAsync[A](description: String)(gen: Gen[A])(expectation: A => Future[Unit]): Unit =
-    it(description) {
-      val sample = gen.sampleOne
-      withClue(s"Generated value: $sample") {
-        expectation(sample).map(_ => succeed)
-      }
-    }
+trait TestDataGenerators:
 
-object TestDataGenerators:
+  def nonEmptyString: Gen[NES] = Gen.nonEmptyListOf(Gen.alphaNumChar).map(_.mkString.nes)
 
-  def nonEmptyString: Gen[String] = Gen.nonEmptyListOf(Gen.alphaNumChar).map(_.mkString)
-
-  def shortString: Gen[String] = Gen.listOfN(10, Gen.alphaNumChar).map(_.mkString)
+  def stringOfN(n: Int): Gen[String] = Gen.listOfN(n, Gen.alphaNumChar).map(_.mkString)
 
   def isbnDigits10: Gen[String] = Gen.listOfN(10, Gen.numChar).map(_.mkString)
 
@@ -124,11 +111,15 @@ object TestDataGenerators:
 
   def genValidISBN: Gen[ISBN] = Gen.oneOf(isbnDigits10, isbnDigits13).map(_.isbnOpt.get)
 
-  def genTimestamp: Gen[Timestamp]        = Gen.choose(0L, System.currentTimeMillis()).map(Timestamp.fromEpochMillis)
-  def genCurrentTimestamp: Gen[Timestamp] = Gen.const(Timestamp.now())
+  def genTimestamp: Gen[Timestamp] = Gen.choose(0L, System.currentTimeMillis()).map(Timestamp.fromEpochMillis)
   def genTimestampInRange(start: Timestamp = Timestamp.init, end: Timestamp): Gen[Timestamp] =
     Gen.choose(start.epochMillis, end.epochMillis).map(Timestamp.fromEpochMillis)
 
+  def genULID: Gen[ULID] = for {
+    isbn <- genValidISBN
+    timestamp <- genTimestamp
+  } yield ULIDConverter.createULID(isbn, timestamp)
+  
   val invalidISBN: Gen[String] = Gen.oneOf(
     Gen.listOfN(9, Gen.numChar).map(_.mkString),      // 9 digits
     Gen.listOfN(11, Gen.numChar).map(_.mkString),     // 11 digits

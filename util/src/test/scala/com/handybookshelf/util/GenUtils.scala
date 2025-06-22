@@ -1,10 +1,11 @@
-package handybookshelf.com.handybookshelf
+package com.handybookshelf.util
+
 import org.scalacheck.Gen
 import org.scalacheck.rng.Seed
 
 import scala.util.Random
 
-object GenUtils:
+trait GenUtils:
 
   extension [A](gen: Gen[A])
     def sampleOne: A =
