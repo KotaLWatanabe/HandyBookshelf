@@ -5,6 +5,7 @@ import util.ISBN.*
 import wvlet.airframe.ulid.ULID
 
 import java.nio.charset.StandardCharsets
+import ISBN.*
 
 object ULIDConverter:
   def createULIDFromISBN(isbn: ISBN, timestamp: Timestamp): ULID = {
@@ -16,8 +17,8 @@ object ULIDConverter:
     ULID.fromBytes(timestamp.toBytes ++ randomPart)
   }
 
-  def createULID(bookCode: String, timestamp: Timestamp): ULID =
-    bookCode.isbnOpt match {
+  def createULID(bookCode: NES, timestamp: Timestamp): ULID =
+    bookCode.str.isbnOpt match {
       case Some(isbn: ISBN) => createULIDFromISBN(isbn, timestamp)
       case None             =>
         // ISBNがない場合は完全ランダムな値

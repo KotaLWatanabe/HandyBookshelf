@@ -1,23 +1,36 @@
 package com
 
-import io.github.iltotore.iron.*
-import io.github.iltotore.iron.constraint.all.*
 import io.circe.{Decoder, Encoder}
+import scala.compiletime.{error, requireConst}
 
 package object handybookshelf:
-  opaque type NES = String :|
-    DescribedAs[MinLength[
-      1
-    ], """NES (Non-empty String) must have at least 1characters."""]
+  opaque type NonEmptyString = String
+  object NonEmptyString:
+    def apply(s: String): Option[NonEmptyString] =
+      if s.isEmpty then None else Some(s)
+
+    inline def from(inline s: String): NonEmptyString =
+      requireConst(s)
+      inline if s == "" then error("got an empty string") else s
+
+    def unsafeNonEmptyString(s: String): NonEmptyString = apply(s).getOrElse(
+      throw new IllegalArgumentException("NonEmptyString must not be empty")
+    )
+
+  given Conversion[NonEmptyString, String]:
+    inline def apply(nes: NonEmptyString): String = nes
+
+  type NES = NonEmptyString
+//    String :|
+//    DescribedAs[MinLength[
+//      1
+//    ], """NES (Non-empty String) must have at least 1characters."""]
+
+
 
   extension (str: String) {
-    def nes: NES            = str.refineUnsafe
-    def nesOpt: Option[NES] = str.refineOption
-  }
-
-  extension (nes: NES) {
-    def size: Int        = nes.length
-    def isEmpty: Boolean = nes.isEmpty
+    def nes: NonEmptyString = NonEmptyString.unsafeNonEmptyString(str)
+    def nesOpt: Option[NES] = NonEmptyString(str)
   }
 
   // Circe codecs for NES
