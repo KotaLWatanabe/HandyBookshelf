@@ -1,6 +1,5 @@
-package com.handybookshelf 
+package com.handybookshelf
 package domain
-
 
 trait AggregateRoot[A <: AggregateRoot[A, E], E <: DomainEvent]:
   def id: String
@@ -8,13 +7,13 @@ trait AggregateRoot[A <: AggregateRoot[A, E], E <: DomainEvent]:
   def uncommittedEvents: List[E]
 
   protected def applyEvent(event: E): A
-  
-  def withEvent(event: E): A = 
+
+  def withEvent(event: E): A =
     applyEvent(event)
-  
+
   def markEventsAsCommitted: A
-  
-  def loadFromHistory(events: List[E]): A = 
+
+  def loadFromHistory(events: List[E]): A =
     events.foldLeft(this.asInstanceOf[A]) { (aggregate, event) =>
       aggregate.applyEvent(event)
     }

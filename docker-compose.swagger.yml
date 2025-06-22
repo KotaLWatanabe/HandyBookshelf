@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  swagger-ui:
+    image: swaggerapi/swagger-ui:latest
+    container_name: handybookshelf-swagger-ui
+    ports:
+      - "8081:8080"
+    environment:
+      - SWAGGER_JSON=/openapi/handybookshelf-api.yaml
+      - BASE_URL=/
+      - SUPPORTED_SUBMIT_METHODS=["get", "post", "put", "delete", "patch"]
+      - VALIDATOR_URL=null
+    volumes:
+      - ./openapi:/openapi:ro
+    restart: unless-stopped
+    networks:
+      - handybookshelf-network
+
+  # Optional: Include the main application for testing
+  # handybookshelf-api:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: handybookshelf-api
+  #   ports:
+  #     - "8080:8080"
+  #   networks:
+  #     - handybookshelf-network
+  #   depends_on:
+  #     - swagger-ui
+
+networks:
+  handybookshelf-network:
+    driver: bridge
+
+# Example usage:
+# docker-compose -f docker-compose.swagger.yml up -d swagger-ui
+# Then access Swagger UI at: http://localhost:8081

@@ -1,4 +1,5 @@
-package com.handybookshelf package controller
+package com.handybookshelf 
+package controller
 
 import cats.effect.Concurrent
 import cats.syntax.all.*

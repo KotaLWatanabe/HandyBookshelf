@@ -1,9 +1,11 @@
-package com.handybookshelf package controller.config
+package com.handybookshelf 
+package controller
+package config
 
 import scala.concurrent.duration.*
 
 /**
- * Akka Actor system configuration
+ * Pekko Actor system configuration
  */
 object ActorConfig:
   
@@ -20,7 +22,7 @@ object ActorConfig:
   /**
    * Default dispatcher configuration
    */
-  val defaultDispatcher: String = "akka.actor.default-dispatcher"
+  val defaultDispatcher: String = "pekko.actor.default-dispatcher"
   
   /**
    * Actor system shutdown timeout
@@ -49,6 +51,6 @@ object ActorConfig:
    * Cluster configuration (for future use)
    */
   object ClusterConfig:
-    val seedNodes: List[String] = List("akka://HandyBookshelfActorSystem@127.0.0.1:2551")
+    val seedNodes: List[String] = List("pekko://HandyBookshelfActorSystem@127.0.0.1:2551")
     val port: Int = 2551
     val roles: Set[String] = Set("backend")

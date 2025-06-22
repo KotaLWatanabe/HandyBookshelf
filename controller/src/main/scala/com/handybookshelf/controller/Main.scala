@@ -1,17 +1,21 @@
-package com.handybookshelf package controller
+package com.handybookshelf 
+package controller
 
 import cats.effect.*
 import com.comcast.ip4s.*
 import api.routes.*
+import actors.SupervisorActor
 import org.http4s.server.Router
 import org.http4s.ember.server.EmberServerBuilder
 
 object Main extends IOApp:
   override def run(args: List[String]): IO[ExitCode] = {
+    // Create supervisor system
+    val supervisorSystem = actors.SupervisorActorUtil.createSupervisorSystem()
+    
     // 全ルートを統合
     val httpApp = Router(
-      "/" -> UserRoutes.routes, // APIルートを登録
-      "/docs" -> SwaggerRoutes.swaggerRoutes
+      "/" -> LoginRoutes[IO](supervisorSystem).routes
     ).orNotFound
 
     // Emberサーバの起動

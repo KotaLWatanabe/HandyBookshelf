@@ -7,9 +7,9 @@ sealed trait UseCaseError extends Exception {
 }
 
 object UseCaseError {
-  final case class ValidationError(message: String) extends UseCaseError
-  final case class NotFoundError(message: String) extends UseCaseError
+  final case class ValidationError(message: String)      extends UseCaseError
+  final case class NotFoundError(message: String)        extends UseCaseError
   final case class ExternalServiceError(message: String) extends UseCaseError
-  final case class InternalError(message: String) extends UseCaseError
-  final case class TimeoutError(message: String) extends UseCaseError
+  final case class InternalError(message: String)        extends UseCaseError
+  final case class TimeoutError(message: String)         extends UseCaseError
 }

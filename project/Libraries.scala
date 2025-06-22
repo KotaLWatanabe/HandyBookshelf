@@ -10,10 +10,12 @@ object Libraries {
   val logbackVersion = "1.5.18"
   val munitCatsEffectVersion = "1.0.7"
   val ulidVersion = "2025.1.14"
-  val ironVersion = "3.0.1"
+  val ironVersion = "3.0.2"
   val xmlVersion = "2.4.0"
   val tapirVersion = "1.11.34"
-  val atnosEffVersion = "7.0.4"
+  val atnosEffVersion = "8.0.0"
+  val pekkoVersion = "1.1.4"
+  val cassandraDriverVersion = "4.17.0"
 
   // Libraries
   lazy val cats = "org.typelevel" %% "cats-core" % catsVersion
@@ -55,13 +57,19 @@ object Libraries {
     "com.softwaremill.sttp.apispec" %% "openapi-circe-yaml" % "0.11.9"
   )
   lazy val atnosEff = "org.atnos" %% "eff" % atnosEffVersion
-  
-  // Akka dependencies - use 2.8.x for Scala 3 compatibility
-  val akkaVersion = "2.8.7"
-  lazy val akka: Seq[ModuleID] = Seq(
-    "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
-    "com.typesafe.akka" %% "akka-stream" % akkaVersion,
-    "com.typesafe.akka" %% "akka-slf4j" % akkaVersion
+
+  lazy val pekko: Seq[ModuleID] = Seq(
+    "org.apache.pekko" %% "pekko-actor-typed" % pekkoVersion,
+    "org.apache.pekko" %% "pekko-stream" % pekkoVersion,
+    "org.apache.pekko" %% "pekko-slf4j" % pekkoVersion,
+    "org.apache.pekko" %% "pekko-persistence-typed" % pekkoVersion,
+    "org.apache.pekko" %% "pekko-actor-testkit-typed" % pekkoVersion % Test,
+    "org.apache.pekko" %% "pekko-persistence-testkit" % pekkoVersion % Test
+  )
+
+  lazy val cassandra: Seq[ModuleID] = Seq(
+    "com.datastax.oss" % "java-driver-core" % cassandraDriverVersion,
+    "com.datastax.oss" % "java-driver-query-builder" % cassandraDriverVersion
   )
 
   // Projects
@@ -78,6 +86,6 @@ object Libraries {
       xml,
       slf4j,
       atnosEff
-    ) ++ http4s ++ tapir ++ sttp ++ akka
+    ) ++ http4s ++ tapir ++ sttp ++ pekko
   val chapter1: Seq[ModuleID] = Seq(catsEffect)
 }

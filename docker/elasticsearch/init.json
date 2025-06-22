@@ -1,0 +1,178 @@
+{
+  "index_templates": {
+    "handybookshelf_template": {
+      "index_patterns": ["handybookshelf-*"],
+      "template": {
+        "settings": {
+          "number_of_shards": 1,
+          "number_of_replicas": 0,
+          "analysis": {
+            "analyzer": {
+              "japanese_analyzer": {
+                "type": "custom",
+                "tokenizer": "kuromoji_tokenizer",
+                "filter": [
+                  "kuromoji_baseform",
+                  "kuromoji_part_of_speech",
+                  "kuromoji_stemmer",
+                  "lowercase",
+                  "asciifolding"
+                ]
+              }
+            }
+          }
+        },
+        "mappings": {
+          "properties": {
+            "timestamp": {
+              "type": "date"
+            },
+            "userAccountId": {
+              "type": "keyword"
+            },
+            "eventType": {
+              "type": "keyword"
+            }
+          }
+        }
+      }
+    }
+  },
+  "indices": {
+    "handybookshelf-books": {
+      "settings": {
+        "number_of_shards": 1,
+        "number_of_replicas": 0,
+        "analysis": {
+          "analyzer": {
+            "japanese_book_analyzer": {
+              "type": "custom",
+              "tokenizer": "kuromoji_tokenizer",
+              "filter": [
+                "kuromoji_baseform",
+                "kuromoji_part_of_speech",
+                "kuromoji_stemmer",
+                "lowercase",
+                "asciifolding",
+                "cjk_width"
+              ]
+            }
+          }
+        }
+      },
+      "mappings": {
+        "properties": {
+          "bookId": {
+            "type": "keyword"
+          },
+          "userAccountId": {
+            "type": "keyword"
+          },
+          "title": {
+            "type": "text",
+            "analyzer": "japanese_book_analyzer",
+            "fields": {
+              "keyword": {
+                "type": "keyword"
+              }
+            }
+          },
+          "isbn": {
+            "type": "keyword"
+          },
+          "authors": {
+            "type": "text",
+            "analyzer": "japanese_book_analyzer",
+            "fields": {
+              "keyword": {
+                "type": "keyword"
+              }
+            }
+          },
+          "tags": {
+            "type": "keyword"
+          },
+          "location": {
+            "type": "keyword"
+          },
+          "status": {
+            "type": "keyword"
+          },
+          "addedAt": {
+            "type": "date"
+          },
+          "updatedAt": {
+            "type": "date"
+          }
+        }
+      }
+    },
+    "handybookshelf-events": {
+      "settings": {
+        "number_of_shards": 1,
+        "number_of_replicas": 0
+      },
+      "mappings": {
+        "properties": {
+          "persistenceId": {
+            "type": "keyword"
+          },
+          "sequenceNr": {
+            "type": "long"
+          },
+          "eventType": {
+            "type": "keyword"
+          },
+          "eventData": {
+            "type": "object",
+            "enabled": false
+          },
+          "timestamp": {
+            "type": "date"
+          },
+          "userAccountId": {
+            "type": "keyword"
+          },
+          "sessionId": {
+            "type": "keyword"
+          }
+        }
+      }
+    },
+    "handybookshelf-sessions": {
+      "settings": {
+        "number_of_shards": 1,
+        "number_of_replicas": 0
+      },
+      "mappings": {
+        "properties": {
+          "userAccountId": {
+            "type": "keyword"
+          },
+          "sessionId": {
+            "type": "keyword"
+          },
+          "createdAt": {
+            "type": "date"
+          },
+          "lastActivity": {
+            "type": "date"
+          },
+          "expiresAt": {
+            "type": "date"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "ipAddress": {
+            "type": "ip"
+          },
+          "userAgent": {
+            "type": "text",
+            "index": false
+          }
+        }
+      }
+    }
+  }
+}

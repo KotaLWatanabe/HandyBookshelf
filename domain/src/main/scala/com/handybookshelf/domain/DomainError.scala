@@ -1,4 +1,4 @@
-package com.handybookshelf 
+package com.handybookshelf
 package domain
 
 trait DomainError:

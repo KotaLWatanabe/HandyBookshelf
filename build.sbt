@@ -7,9 +7,9 @@ ThisBuild / scalaVersion := "3.7.1"
 ThisBuild / semanticdbEnabled := true
 
 lazy val commonSettings = Seq(
-  run / fork := true,
+  run / fork   := true,
   organization := "com.handybookshelf",
-  version := "0.1.0-SNAPSHOT",
+  version      := "0.1.0-SNAPSHOT",
   libraryDependencies ++= Libraries.common,
   Compile / compile / wartremoverErrors ++= Seq(
     Wart.ArrayEquals,
@@ -28,13 +28,13 @@ lazy val commonSettings = Seq(
   ),
   wartremoverExcluded += sourceManaged.value,
   scalacOptions ++= Seq(
-    "UTF-8", // ファイルのエンコーディング
-    "-deprecation", // 非推奨APIに関する警告
-    "-unchecked", // 型チェックに関する警告
-    "-feature", // 言語仕様の変更に関する警告
+    "UTF-8",          // ファイルのエンコーディング
+    "-deprecation",   // 非推奨APIに関する警告
+    "-unchecked",     // 型チェックに関する警告
+    "-feature",       // 言語仕様の変更に関する警告
     "-explain-types", // 型エラー時に詳細な説明を表示
 //    "-Werror", // 警告をエラーとして扱う
-    "-Wunused:all", // 未使用コードに関する警告
+    "-Wunused:all",  // 未使用コードに関する警告
     "-source:future" // 未来のバージョンの言語仕様を使用
   ),
   scalacOptions --= Seq(
@@ -43,8 +43,8 @@ lazy val commonSettings = Seq(
   )
 )
 
-scalafixAll := {}
-scalafix := {}
+scalafixAll     := {}
+scalafix        := {}
 Test / scalafix := {}
 
 //lazy val scalafix_input = (project in file("scalafix/input"))
@@ -67,7 +67,8 @@ lazy val util = (project in file("util"))
 
 lazy val infrastructure = (project in file("infrastructure"))
   .settings(
-    commonSettings
+    commonSettings,
+    libraryDependencies ++= Libraries.cassandra
   )
   .dependsOn(util)
 
@@ -91,6 +92,7 @@ lazy val usecase = (project in file("usecase"))
 
 lazy val controller = (project in file("controller"))
   .settings(
-    commonSettings
+    commonSettings,
+    libraryDependencies ++= Libraries.pekko
   )
-  .dependsOn(util, domain, adopter, usecase, infrastructure)
+  .dependsOn(util, domain, infrastructure)

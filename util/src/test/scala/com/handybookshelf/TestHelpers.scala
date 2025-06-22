@@ -1,4 +1,5 @@
-package com.handybookshelf import com.handybookshelf.util.{ISBN, Timestamp}
+package com.handybookshelf
+import com.handybookshelf.util.{ISBN, Timestamp}
 import org.scalacheck.Gen
 import org.scalatest.funspec.{AnyFunSpec, AsyncFunSpec}
 import org.scalatest.matchers.should.Matchers

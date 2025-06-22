@@ -1,4 +1,4 @@
-package com.handybookshelf 
+package com.handybookshelf
 package infrastructure
 
 import cats.effect.IO
@@ -12,7 +12,7 @@ final case class EventVersion(value: Long) extends AnyVal:
 object EventVersion:
   val any: EventVersion      = EventVersion(-1L)
   val noStream: EventVersion = EventVersion(0L)
-  val init: EventVersion = EventVersion(1L)
+  val init: EventVersion     = EventVersion(1L)
 
 final case class StreamMetadata(
     streamId: StreamId,
@@ -79,7 +79,7 @@ class InMemoryEventStore extends EventStore:
       for {
         currentMetadata <- getStreamMetadata(streamId)
         _               <- validateVersion(currentMetadata, expectedVersion)
-        newVersion  = currentMetadata.map(_.version.next).getOrElse(EventVersion.init)
+        newVersion = currentMetadata.map(_.version.next).getOrElse(EventVersion.init)
         timestamp <- Timestamp.now
         newMetadata = StreamMetadata(streamId, newVersion, timestamp)
         _ <- IO {

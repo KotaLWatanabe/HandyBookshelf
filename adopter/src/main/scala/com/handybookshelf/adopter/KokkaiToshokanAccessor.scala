@@ -1,9 +1,12 @@
-package handybookshelf.com.handybookshelf
+package com.handybookshelf
 package adopter
 
 import cats.effect.IO
 import cats.implicits.*
-import com.handybookshelf.util.{ISBN, nes}
+import com.handybookshelf.util.{ISBN, *}
+import com.handybookshelf.domain.Book
+import com.handybookshelf.nes
+import com.handybookshelf.util.ISBN.isbnOpt
 import org.http4s.Uri
 import org.http4s.ember.client.EmberClientBuilder
 import org.http4s.implicits.*
@@ -24,7 +27,7 @@ object KokkaiToshokanAccessor:
 
   private def isbnSubStr = (str: String) => str.substring(37, str.length - 16)
 
-  private val bookTitle = "Akka実践バイブル"
+  private val bookTitle = "Pekko実践バイブル"
 
   private val httpClientBuilt =
     EmberClientBuilder.default[IO].withTimeout(Duration.Inf).build
@@ -47,7 +50,7 @@ object KokkaiToshokanAccessor:
 
   private def xmlToBooks(elem: Elem): Seq[(ISBN, String)] =
     for {
-      item <- elem \\ "item"
+      item  <- elem \\ "item"
       title <- (item \ "title").headOption.map(_.text)
       isbnStr: String <- isbnTagPattern
         .findFirstIn(item.toString)

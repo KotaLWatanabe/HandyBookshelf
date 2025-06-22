@@ -1,4 +1,6 @@
-package com.handybookshelfpackage controller.api.routes
+package com.handybookshelf
+package controller.api
+package routes
 
 import cats.effect.*
 import controller.UserLogic

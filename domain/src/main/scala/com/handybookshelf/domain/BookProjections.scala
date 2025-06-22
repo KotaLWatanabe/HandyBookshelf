@@ -167,7 +167,7 @@ class TagViewProjection(bookViewProjection: BookViewProjection) extends Projecti
     for {
       allBooks <- bookViewProjection.getAllViews()
       booksWithTag = allBooks
-        .filter(_.tags.exists(_.name == tagName))
+        .filter(_.tags.exists(_.name.toString == tagName))
         .map(view =>
           BookSummary(
             id = view.id,
@@ -179,7 +179,7 @@ class TagViewProjection(bookViewProjection: BookViewProjection) extends Projecti
         )
     } yield {
       if (booksWithTag.nonEmpty)
-        Some(TagView(Tag(tagName), booksWithTag))
+        Some(TagView(Tag(tagName.nes), booksWithTag))
       else
         None
     }

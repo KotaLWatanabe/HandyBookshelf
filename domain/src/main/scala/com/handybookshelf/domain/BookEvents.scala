@@ -1,4 +1,4 @@
-package com.handybookshelf 
+package com.handybookshelf
 package domain
 
 import com.handybookshelf.util.{ISBN, Timestamp}
@@ -10,7 +10,7 @@ sealed trait BookEvent extends DomainEvent:
   def bookId: BookId
   def bookEventType: BookEventType
   override def aggregateId: String = bookId.toString
-  override def eventType: String = bookEventType.eventType
+  override def eventType: String   = bookEventType.eventType
 
 enum BookEventType(val eventType: String):
   case Registered      extends BookEventType("BookRegistered")
@@ -40,7 +40,7 @@ final case class BookLocationChanged(
     version: EventVersion,
     timestamp: Timestamp
 ) extends BookEvent:
-    val bookEventType: BookEventType = BookEventType.LocationChanged
+  val bookEventType: BookEventType = BookEventType.LocationChanged
 
 final case class BookTagAdded(
     eventId: EventId,
@@ -49,7 +49,7 @@ final case class BookTagAdded(
     version: EventVersion,
     timestamp: Timestamp
 ) extends BookEvent:
-    val bookEventType: BookEventType = BookEventType.TagAdded
+  val bookEventType: BookEventType = BookEventType.TagAdded
 
 final case class BookTagRemoved(
     eventId: EventId,

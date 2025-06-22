@@ -1,4 +1,6 @@
-package com.handybookshelf package controller.api.endpoints
+package com.handybookshelf 
+package controller.api
+package endpoints
 
 import io.circe.generic.semiauto.*
 import io.circe.{Decoder, Encoder}

@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets
 object ULIDConverter:
   def createULIDFromISBN(isbn: ISBN, timestamp: Timestamp): ULID = {
     // ISBNをバイト配列に変換し、10ビットに収まるよう調整
-    val isbnBytes = isbn.getBytes(StandardCharsets.UTF_8).take(10)
+    val isbnBytes  = isbn.getBytes(StandardCharsets.UTF_8).take(10)
     val randomPart = isbnBytes.padTo(10, 0.toByte) // 足りない部分はゼロパディング
 
     // ULID生成 (6 bytes timestamp + 10 bytes random = 16 bytes total)

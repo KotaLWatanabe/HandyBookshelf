@@ -4,13 +4,12 @@ package controller
 import cats.effect.{Async, Resource}
 import cats.syntax.all.*
 import com.comcast.ip4s.*
-
+import com.handybookshelf.controller.api.routes.LoginRoutes
 import fs2.io.net.Network
 import org.http4s.ember.client.EmberClientBuilder
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.implicits.*
 import org.http4s.server.middleware.Logger
-
 import controller.actors.SupervisorActorUtil
 
 object HandyBookshelfServer:
