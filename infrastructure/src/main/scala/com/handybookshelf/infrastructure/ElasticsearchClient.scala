@@ -16,51 +16,50 @@ import java.time.Instant
 import scala.concurrent.ExecutionContext
 
 /**
- * Elasticsearch client for CQRS read model operations
- * Handles book search, indexing, and query operations
+ * Elasticsearch client for CQRS read model operations Handles book search, indexing, and query operations
  */
 class ElasticsearchClient(client: Client[IO], baseUri: Uri)(using ExecutionContext):
 
-  private val booksIndex = "handybookshelf-books"
-  private val eventsIndex = "handybookshelf-events" 
+  private val booksIndex    = "handybookshelf-books"
+  private val eventsIndex   = "handybookshelf-events"
   private val sessionsIndex = "handybookshelf-sessions"
 
   /**
    * Book document for Elasticsearch indexing
    */
   case class BookDocument(
-    bookId: String,
-    userAccountId: String,
-    title: String,
-    isbn: Option[String],
-    authors: List[String],
-    tags: List[String],
-    location: Option[String],
-    status: String,
-    addedAt: Instant,
-    updatedAt: Instant
+      bookId: String,
+      userAccountId: String,
+      title: String,
+      isbn: Option[String],
+      authors: List[String],
+      tags: List[String],
+      location: Option[String],
+      status: String,
+      addedAt: Instant,
+      updatedAt: Instant
   )
 
   /**
    * Search result wrapper
    */
   case class SearchResult[T](
-    hits: SearchHits[T],
-    took: Int,
-    timedOut: Boolean
+      hits: SearchHits[T],
+      took: Int,
+      timedOut: Boolean
   )
 
   case class SearchHits[T](
-    total: SearchTotal,
-    hits: List[SearchHit[T]]
+      total: SearchTotal,
+      hits: List[SearchHit[T]]
   )
 
   case class SearchTotal(value: Long, relation: String)
 
   case class SearchHit[T](
-    id: String,
-    source: T,
-    score: Option[Double]
+      id: String,
+      source: T,
+      score: Option[Double]
   )
 
   /**
@@ -82,10 +81,10 @@ class ElasticsearchClient(client: Client[IO], baseUri: Uri)(using ExecutionConte
    * Search books by title with Japanese text analysis
    */
   def searchBooksByTitle(
-    userAccountId: String, 
-    title: String, 
-    size: Int = 10,
-    from: Int = 0
+      userAccountId: String,
+      title: String,
+      size: Int = 10,
+      from: Int = 0
   ): IO[List[BookDocument]] =
     val searchQuery = Json.obj(
       "query" -> Json.obj(
@@ -99,7 +98,7 @@ class ElasticsearchClient(client: Client[IO], baseUri: Uri)(using ExecutionConte
             Json.obj(
               "match" -> Json.obj(
                 "title" -> Json.obj(
-                  "query" -> Json.fromString(title),
+                  "query"    -> Json.fromString(title),
                   "analyzer" -> Json.fromString("japanese_book_analyzer")
                 )
               )
@@ -120,9 +119,9 @@ class ElasticsearchClient(client: Client[IO], baseUri: Uri)(using ExecutionConte
    * Search books by tags
    */
   def searchBooksByTags(
-    userAccountId: String,
-    tags: List[String],
-    size: Int = 10
+      userAccountId: String,
+      tags: List[String],
+      size: Int = 10
   ): IO[List[BookDocument]] =
     val searchQuery = Json.obj(
       "query" -> Json.obj(
@@ -150,10 +149,10 @@ class ElasticsearchClient(client: Client[IO], baseUri: Uri)(using ExecutionConte
    * Get all books for a user with pagination
    */
   def getAllUserBooks(
-    userAccountId: String,
-    size: Int = 50,
-    from: Int = 0,
-    sortBy: String = "addedAt"
+      userAccountId: String,
+      size: Int = 50,
+      from: Int = 0,
+      sortBy: String = "addedAt"
   ): IO[List[BookDocument]] =
     val searchQuery = Json.obj(
       "query" -> Json.obj(
@@ -174,7 +173,7 @@ class ElasticsearchClient(client: Client[IO], baseUri: Uri)(using ExecutionConte
    * Delete a book document
    */
   def deleteBook(userAccountId: String, bookId: String): IO[Unit] =
-    val uri = baseUri / booksIndex / "_doc" / bookId
+    val uri     = baseUri / booksIndex / "_doc" / bookId
     val request = Request[IO](method = Method.DELETE, uri = uri)
 
     client.expect[Json](request).void.handleErrorWith { error =>
@@ -185,21 +184,21 @@ class ElasticsearchClient(client: Client[IO], baseUri: Uri)(using ExecutionConte
    * Index an event for audit trail
    */
   def indexEvent(
-    persistenceId: String,
-    sequenceNr: Long,
-    eventType: String,
-    eventData: Json,
-    userAccountId: String,
-    sessionId: Option[String] = None
+      persistenceId: String,
+      sequenceNr: Long,
+      eventType: String,
+      eventData: Json,
+      userAccountId: String,
+      sessionId: Option[String] = None
   ): IO[Unit] =
     val eventDoc = Json.obj(
       "persistenceId" -> Json.fromString(persistenceId),
-      "sequenceNr" -> Json.fromLong(sequenceNr),
-      "eventType" -> Json.fromString(eventType),
-      "eventData" -> eventData,
+      "sequenceNr"    -> Json.fromLong(sequenceNr),
+      "eventType"     -> Json.fromString(eventType),
+      "eventData"     -> eventData,
       "userAccountId" -> Json.fromString(userAccountId),
-      "sessionId" -> sessionId.fold(Json.Null)(Json.fromString),
-      "timestamp" -> Json.fromString(Instant.now().toString)
+      "sessionId"     -> sessionId.fold(Json.Null)(Json.fromString),
+      "timestamp"     -> Json.fromString(Instant.now().toString)
     )
 
     val uri = baseUri / eventsIndex / "_doc"
@@ -217,22 +216,22 @@ class ElasticsearchClient(client: Client[IO], baseUri: Uri)(using ExecutionConte
    * Index session information
    */
   def indexSession(
-    userAccountId: String,
-    sessionId: String,
-    createdAt: Instant,
-    expiresAt: Instant,
-    ipAddress: Option[String] = None,
-    userAgent: Option[String] = None
+      userAccountId: String,
+      sessionId: String,
+      createdAt: Instant,
+      expiresAt: Instant,
+      ipAddress: Option[String] = None,
+      userAgent: Option[String] = None
   ): IO[Unit] =
     val sessionDoc = Json.obj(
       "userAccountId" -> Json.fromString(userAccountId),
-      "sessionId" -> Json.fromString(sessionId),
-      "createdAt" -> Json.fromString(createdAt.toString),
-      "lastActivity" -> Json.fromString(createdAt.toString),
-      "expiresAt" -> Json.fromString(expiresAt.toString),
-      "isActive" -> Json.True,
-      "ipAddress" -> ipAddress.fold(Json.Null)(Json.fromString),
-      "userAgent" -> userAgent.fold(Json.Null)(Json.fromString)
+      "sessionId"     -> Json.fromString(sessionId),
+      "createdAt"     -> Json.fromString(createdAt.toString),
+      "lastActivity"  -> Json.fromString(createdAt.toString),
+      "expiresAt"     -> Json.fromString(expiresAt.toString),
+      "isActive"      -> Json.True,
+      "ipAddress"     -> ipAddress.fold(Json.Null)(Json.fromString),
+      "userAgent"     -> userAgent.fold(Json.Null)(Json.fromString)
     )
 
     val uri = baseUri / sessionsIndex / "_doc" / sessionId
@@ -248,10 +247,10 @@ class ElasticsearchClient(client: Client[IO], baseUri: Uri)(using ExecutionConte
    * Aggregated search across books and events
    */
   def searchUserActivity(
-    userAccountId: String,
-    query: String,
-    from: Instant,
-    to: Instant
+      userAccountId: String,
+      query: String,
+      from: Instant,
+      to: Instant
   ): IO[Json] =
     val searchQuery = Json.obj(
       "query" -> Json.obj(
@@ -312,7 +311,7 @@ class ElasticsearchClient(client: Client[IO], baseUri: Uri)(using ExecutionConte
         case Right(hitJsons) =>
           hitJsons.traverse { hitJson =>
             hitJson.hcursor.downField("_source").as[T] match {
-              case Right(doc) => IO.pure(doc)
+              case Right(doc)  => IO.pure(doc)
               case Left(error) => IO.raiseError(new RuntimeException(s"Failed to decode document: $error"))
             }
           }
@@ -325,24 +324,27 @@ class ElasticsearchClient(client: Client[IO], baseUri: Uri)(using ExecutionConte
    * Health check
    */
   def healthCheck: IO[Boolean] =
-    val uri = baseUri / "_cluster" / "health"
+    val uri     = baseUri / "_cluster" / "health"
     val request = Request[IO](method = Method.GET, uri = uri)
-    
-    client.expect[Json](request).map { response =>
-      response.hcursor.downField("status").as[String] match {
-        case Right("green" | "yellow") => true
-        case _ => false
+
+    client
+      .expect[Json](request)
+      .map { response =>
+        response.hcursor.downField("status").as[String] match {
+          case Right("green" | "yellow") => true
+          case _                         => false
+        }
       }
-    }.handleErrorWith(_ => IO.pure(false))
+      .handleErrorWith(_ => IO.pure(false))
 
 /**
  * Elasticsearch client factory
  */
 object ElasticsearchClient:
-  
+
   def create(client: Client[IO], baseUrl: String = "http://localhost:9200"): IO[ElasticsearchClient] =
     Uri.fromString(baseUrl) match {
-      case Right(uri) => IO.pure(new ElasticsearchClient(client, uri))
+      case Right(uri)  => IO.pure(new ElasticsearchClient(client, uri))
       case Left(error) => IO.raiseError(new IllegalArgumentException(s"Invalid Elasticsearch URL: $error"))
     }
 
@@ -350,22 +352,36 @@ object ElasticsearchClient:
     val baseUrl = sys.env.getOrElse("ELASTICSEARCH_HOSTS", "http://localhost:9200")
     create(client, baseUrl)
 
+  /**
+   * Given instances for JSON codecs
+   */
+  given Encoder[ElasticsearchClient.BookDocument]    = io.circe.generic.semiauto.deriveEncoder
+  given Decoder[ElasticsearchClient.BookDocument]    = io.circe.generic.semiauto.deriveDecoder
+  given Encoder[ElasticsearchClient.SearchResult[?]] = io.circe.generic.semiauto.deriveEncoder
+  given Decoder[ElasticsearchClient.SearchResult[?]] = io.circe.generic.semiauto.deriveDecoder
+  given Encoder[ElasticsearchClient.SearchHits[?]]   = io.circe.generic.semiauto.deriveEncoder
+  given Decoder[ElasticsearchClient.SearchHits[?]]   = io.circe.generic.semiauto.deriveDecoder
+  given Encoder[ElasticsearchClient.SearchTotal]     = io.circe.generic.semiauto.deriveEncoder
+  given Decoder[ElasticsearchClient.SearchTotal]     = io.circe.generic.semiauto.deriveDecoder
+  given Encoder[ElasticsearchClient.SearchHit[?]]    = io.circe.generic.semiauto.deriveEncoder
+  given Decoder[ElasticsearchClient.SearchHit[?]]    = io.circe.generic.semiauto.deriveDecoder
+
 /**
  * Book projection service for CQRS read model updates
  */
 class BookProjectionService(esClient: ElasticsearchClient):
-  
+  import ElasticsearchClient.*
   /**
    * Handle BookAdded event
    */
   def handleBookAdded(
-    userAccountId: UserAccountId,
-    bookId: BookId,
-    bookReference: BookReference,
-    filters: Filters,
-    timestamp: Instant
+      userAccountId: UserAccountId,
+      bookId: BookId,
+      bookReference: BookReference,
+      filters: Filters,
+      timestamp: Instant
   ): IO[Unit] =
-    val bookDoc = ElasticsearchClient.BookDocument(
+    val bookDoc = esClient.BookDocument(
       bookId = bookId.breachEncapsulationOfBookId,
       userAccountId = userAccountId.breachEncapsulationIdAsString,
       title = bookReference.title,
@@ -384,24 +400,10 @@ class BookProjectionService(esClient: ElasticsearchClient):
    * Handle BookRemoved event
    */
   def handleBookRemoved(
-    userAccountId: UserAccountId,
-    bookId: BookId
+      userAccountId: UserAccountId,
+      bookId: BookId
   ): IO[Unit] =
     esClient.deleteBook(
       userAccountId.breachEncapsulationIdAsString,
       bookId.breachEncapsulationOfBookId
     )
-
-/**
- * Given instances for JSON codecs
- */
-given Encoder[ElasticsearchClient.BookDocument] = io.circe.generic.semiauto.deriveEncoder
-given Decoder[ElasticsearchClient.BookDocument] = io.circe.generic.semiauto.deriveDecoder
-given Encoder[ElasticsearchClient.SearchResult[?]] = io.circe.generic.semiauto.deriveEncoder
-given Decoder[ElasticsearchClient.SearchResult[?]] = io.circe.generic.semiauto.deriveDecoder
-given Encoder[ElasticsearchClient.SearchHits[?]] = io.circe.generic.semiauto.deriveEncoder
-given Decoder[ElasticsearchClient.SearchHits[?]] = io.circe.generic.semiauto.deriveDecoder
-given Encoder[ElasticsearchClient.SearchTotal] = io.circe.generic.semiauto.deriveEncoder
-given Decoder[ElasticsearchClient.SearchTotal] = io.circe.generic.semiauto.deriveDecoder
-given Encoder[ElasticsearchClient.SearchHit[?]] = io.circe.generic.semiauto.deriveEncoder
-given Decoder[ElasticsearchClient.SearchHit[?]] = io.circe.generic.semiauto.deriveDecoder

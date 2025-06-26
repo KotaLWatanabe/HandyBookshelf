@@ -16,6 +16,7 @@ object Libraries {
   val atnosEffVersion        = "8.0.0"
   val pekkoVersion           = "1.1.4"
   val cassandraDriverVersion = "4.17.0"
+  val awsVersion             = "2.29.40"
 
   // Libraries
   lazy val cats       = "org.typelevel" %% "cats-core"   % catsVersion
@@ -71,6 +72,11 @@ object Libraries {
   lazy val cassandra: Seq[ModuleID] = Seq(
     "com.datastax.oss" % "java-driver-core"          % cassandraDriverVersion,
     "com.datastax.oss" % "java-driver-query-builder" % cassandraDriverVersion
+  )
+
+  lazy val dynamodb: Seq[ModuleID] = Seq(
+    "software.amazon.awssdk" % "dynamodb"       % awsVersion,
+    "software.amazon.awssdk" % "url-connection-client" % awsVersion
   )
 
   // Projects

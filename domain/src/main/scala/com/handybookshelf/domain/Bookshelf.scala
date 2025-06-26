@@ -11,27 +11,23 @@ sealed trait BookSorter:
 
 // Concrete sorter implementations
 case object TitleSorter extends BookSorter:
-  def compare: (BookReference, BookReference) => Int = 
-    (a, b) => a.book.title.toString.compareTo(b.book.title.toString)
-
-case object DateSorter extends BookSorter:
-  def compare: (BookReference, BookReference) => Int = 
-    (a, b) => a.book.id.toString.compareTo(b.book.id.toString)
+  def compare: (BookReference, BookReference) => Int =
+    (a, b) => a.book.titleCompare(b.book)
 
 sealed trait Filter:
   def predicate: BookReference => Boolean
 
 // Concrete filter implementations
 final case class TitleFilter(title: String) extends Filter:
-  def predicate: BookReference => Boolean = 
-    br => br.book.title.toString.contains(title)
+  def predicate: BookReference => Boolean =
+    br => br.book.title.contains(title)
 
 final case class TagFilter(tag: String) extends Filter:
-  def predicate: BookReference => Boolean = 
-    br => br.tags.exists(_.name.toString.contains(tag))
+  def predicate: BookReference => Boolean =
+    br => br.tags.exists(_.name.contains(tag))
 
 final case class DeviceFilter(device: Device) extends Filter:
-  def predicate: BookReference => Boolean = 
+  def predicate: BookReference => Boolean =
     br => br.devices.contains_(device)
 
 final case class Filters(filters: Set[Filter]):
@@ -45,8 +41,8 @@ final case class Bookshelf(
 ):
   // Public accessors for persistence
   def books: Map[BookId, (Filters, BookReference)] = _books
-  def sorter: BookSorter = _sorter
-  
+  def sorter: BookSorter                           = _sorter
+
   private val filteredBooks: IndexedSeq[BookReference] =
     _books.toIndexedSeq.filter { case (_, (filters, ref)) => filters.predicates(ref) }.map(_._2._2)
 
@@ -69,8 +65,8 @@ final case class Bookshelf(
   )
 
 // Circe codecs for JSON serialization
-given Encoder[Filter] = deriveEncoder
-given Decoder[Filter] = deriveDecoder
+given Encoder[Filter]  = deriveEncoder
+given Decoder[Filter]  = deriveDecoder
 given Encoder[Filters] = deriveEncoder
 given Decoder[Filters] = deriveDecoder
 
@@ -82,14 +78,14 @@ given Decoder[BookSorter] = deriveDecoder
 given Encoder[Bookshelf] = Encoder.instance { bookshelf =>
   import io.circe.Json
   Json.obj(
-    "books" -> Encoder[Map[BookId, (Filters, BookReference)]].apply(bookshelf.books),
+    "books"  -> Encoder[Map[BookId, (Filters, BookReference)]].apply(bookshelf.books),
     "sorter" -> Encoder[BookSorter].apply(bookshelf.sorter)
   )
 }
 
 given Decoder[Bookshelf] = Decoder.instance { cursor =>
   for {
-    books <- cursor.downField("books").as[Map[BookId, (Filters, BookReference)]]
+    books  <- cursor.downField("books").as[Map[BookId, (Filters, BookReference)]]
     sorter <- cursor.downField("sorter").as[BookSorter]
   } yield Bookshelf(books, sorter)
 }

@@ -65,18 +65,18 @@ lazy val util = (project in file("util"))
     commonSettings
   )
 
-lazy val infrastructure = (project in file("infrastructure"))
-  .settings(
-    commonSettings,
-    libraryDependencies ++= Libraries.cassandra
-  )
-  .dependsOn(util)
-
 lazy val domain = (project in file("domain"))
   .settings(
     commonSettings
   )
   .dependsOn(util)
+
+lazy val infrastructure = (project in file("infrastructure"))
+  .settings(
+    commonSettings,
+    libraryDependencies ++= Libraries.cassandra ++ Libraries.dynamodb
+  )
+  .dependsOn(util, domain)
 
 lazy val adopter = (project in file("adopter"))
   .settings(
@@ -95,4 +95,4 @@ lazy val controller = (project in file("controller"))
     commonSettings,
     libraryDependencies ++= Libraries.pekko
   )
-  .dependsOn(util, domain, infrastructure)
+  .dependsOn(util, domain, infrastructure, adopter, usecase)

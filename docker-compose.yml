@@ -126,10 +126,28 @@ services:
     networks:
       - handybookshelf-network
 
+  # DynamoDB Local - For local development
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    container_name: handybookshelf-dynamodb-local
+    ports:
+      - "8000:8000"
+    volumes:
+      - dynamodb_data:/home/dynamodblocal/data
+    command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-dbPath", "/home/dynamodblocal/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - handybookshelf-network
+
 volumes:
   scylla_data:
   elasticsearch_data:
   redis_data:
+  dynamodb_data:
 
 networks:
   handybookshelf-network:

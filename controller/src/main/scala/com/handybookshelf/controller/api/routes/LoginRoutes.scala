@@ -3,15 +3,13 @@ package controller
 package api
 package routes
 
-import org.apache.pekko.actor.typed.ActorSystem
-import org.apache.pekko.util.Timeout
 import cats.effect.Async
 import cats.syntax.all.*
 import cats.effect.kernel.MonadCancelThrow
-import com.handybookshelf.controller.actors.{SupervisorActor, UserSessionActor}
 import com.handybookshelf.controller.api.endpoints.LoginEndpoints.{loginEndpoint, logoutEndpoint, statusEndpoint}
 import com.handybookshelf.controller.api.endpoints.*
 import com.handybookshelf.domain.UserAccountId
+import com.handybookshelf.infrastructure.{SessionService, LoginResult, LogoutResult, UserStatusResult}
 import com.handybookshelf.util.{IDGenerator, ULIDGen}
 import com.handybookshelf.util.IDGenerator._idgen
 import org.atnos.eff.*
@@ -22,11 +20,7 @@ import sttp.tapir.server.http4s.Http4sServerInterpreter
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.*
 
-class LoginRoutes[F[_]: Async](supervisorSystem: ActorSystem[SupervisorActor.SupervisorCommand]):
-
-  given timeout: Timeout     = 3.seconds
-  given scheduler: org.apache.pekko.actor.typed.Scheduler = supervisorSystem.scheduler
-  implicit val ec: ExecutionContext = ExecutionContext.global
+class LoginRoutes[F[_]: Async](sessionService: SessionService):
 
   // Effect stack with ULIDGen
   type EffStack = Fx.fx1[ULIDGen]
@@ -49,15 +43,10 @@ class LoginRoutes[F[_]: Async](supervisorSystem: ActorSystem[SupervisorActor.Sup
     
     val userId = runULIDGen(userIdGeneration)
     
-    // Use the new SupervisorActor interface
-    import org.apache.pekko.actor.typed.scaladsl.AskPattern.*
-    
     for {
-      // Send login command to supervisor
+      // Use the session service directly
       response <- MonadCancelThrow[F].fromFuture(MonadCancelThrow[F].pure(
-        supervisorSystem.ask[UserSessionActor.LoginResponse](replyTo =>
-          SupervisorActor.LoginUser(userId, replyTo)
-        )
+        sessionService.login(userId).unsafeToFuture()
       ))
       
       result = if response.success then
@@ -77,13 +66,9 @@ class LoginRoutes[F[_]: Async](supervisorSystem: ActorSystem[SupervisorActor.Sup
     
     val userId = runULIDGen(userIdGeneration)
     
-    import org.apache.pekko.actor.typed.scaladsl.AskPattern.*
-    
     for {
       response <- MonadCancelThrow[F].fromFuture(MonadCancelThrow[F].pure(
-        supervisorSystem.ask[UserSessionActor.LogoutResponse](replyTo =>
-          SupervisorActor.LogoutUser(userId, replyTo)
-        )
+        sessionService.logout(userId).unsafeToFuture()
       ))
       
       result = if response.success then
@@ -102,13 +87,9 @@ class LoginRoutes[F[_]: Async](supervisorSystem: ActorSystem[SupervisorActor.Sup
     
     val userId = runULIDGen(userIdGeneration)
     
-    import org.apache.pekko.actor.typed.scaladsl.AskPattern.*
-    
     for {
       response <- MonadCancelThrow[F].fromFuture(MonadCancelThrow[F].pure(
-        supervisorSystem.ask[UserSessionActor.UserStatusResponse](replyTo =>
-          SupervisorActor.GetUserStatus(userId, replyTo)
-        )
+        sessionService.getUserStatus(userId).unsafeToFuture()
       ))
       
       result = Right(UserStatusResponse(
@@ -125,5 +106,5 @@ class LoginRoutes[F[_]: Async](supervisorSystem: ActorSystem[SupervisorActor.Sup
   }
 
 object LoginRoutes:
-  def apply[F[_]: Async](supervisorSystem: ActorSystem[SupervisorActor.SupervisorCommand]): LoginRoutes[F] =
-    new LoginRoutes[F](supervisorSystem)
+  def apply[F[_]: Async](sessionService: SessionService): LoginRoutes[F] =
+    new LoginRoutes[F](sessionService)
