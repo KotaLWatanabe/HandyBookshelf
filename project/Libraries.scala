@@ -16,7 +16,7 @@ object Libraries {
   val atnosEffVersion        = "8.0.0"
   val pekkoVersion           = "1.1.4"
   val cassandraDriverVersion = "4.17.0"
-  val awsVersion             = "2.29.40"
+  val awsVersion             = "2.29.52"
 
   // Libraries
   lazy val cats       = "org.typelevel" %% "cats-core"   % catsVersion
@@ -43,10 +43,10 @@ object Libraries {
     "org.wvlet.airframe" %% "airframe-ulid" % ulidVersion
   lazy val circe = "io.circe" %% "circe-generic" % circeVersion
 
-  lazy val iron     = "io.github.iltotore"     %% "iron"      % ironVersion
+  lazy val iron = "io.github.iltotore" %% "iron" % ironVersion
 //  lazy val ironCats = "io.github.iltotore"     %% "iron-cats" % ironVersion
-  lazy val refined  = "eu.timepit"             %% "refined"   % "0.11.3"
-  lazy val xml      = "org.scala-lang.modules" %% "scala-xml" % xmlVersion
+  lazy val refined = "eu.timepit"             %% "refined"   % "0.11.3"
+  lazy val xml     = "org.scala-lang.modules" %% "scala-xml" % xmlVersion
   lazy val tapir: Seq[ModuleID] = Seq(
     "com.softwaremill.sttp.tapir" %% "tapir-core"              % tapirVersion,
     "com.softwaremill.sttp.tapir" %% "tapir-http4s-server"     % tapirVersion,
@@ -75,7 +75,7 @@ object Libraries {
   )
 
   lazy val dynamodb: Seq[ModuleID] = Seq(
-    "software.amazon.awssdk" % "dynamodb"       % awsVersion,
+    "software.amazon.awssdk" % "dynamodb"              % awsVersion,
     "software.amazon.awssdk" % "url-connection-client" % awsVersion
   )
 
