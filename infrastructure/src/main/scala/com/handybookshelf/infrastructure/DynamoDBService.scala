@@ -2,6 +2,8 @@ package com.handybookshelf.infrastructure
 
 import cats.effect.{IO, Resource}
 import com.handybookshelf.domain.{Book, BookId}
+import io.circe.Codec
+
 import java.net.URI
 
 class DynamoDBService private (
@@ -23,7 +25,7 @@ class DynamoDBService private (
 
 object DynamoDBService {
   
-  def createLocal(tableName: String = "HandyBookshelf"): Resource[IO, DynamoDBService] = 
+  def createLocal(tableName: String = "HandyBookshelf")(using Codec[Book]): Resource[IO, DynamoDBService] = 
     for {
       client <- DynamoDBClient.createLocalClient()
       repository = new DynamoDBRepositoryImpl(client, tableName)
@@ -31,7 +33,7 @@ object DynamoDBService {
       bookRepository = new BookDynamoDBRepositoryImpl(repository)
     } yield new DynamoDBService(bookRepository)
   
-  def create(endpoint: URI, tableName: String = "HandyBookshelf"): Resource[IO, DynamoDBService] = 
+  def create(endpoint: URI, tableName: String = "HandyBookshelf")(using Codec[Book]): Resource[IO, DynamoDBService] = 
     for {
       client <- DynamoDBClient.createClient(endpoint)
       repository = new DynamoDBRepositoryImpl(client, tableName)

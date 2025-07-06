@@ -11,24 +11,24 @@ This directory contains the OpenAPI specification and tools for the HandyBookshe
 
 ### View API Documentation with Swagger UI
 
-#### Option 1: Using Docker Compose (Recommended)
+#### Option 1: Using Podman Compose (Recommended)
 
 From the project root directory:
 
 ```bash
 # Start Swagger UI
-docker-compose -f docker-compose.swagger.yml up -d swagger-ui
+podman-compose -f docker-compose.swagger.yml up -d swagger-ui
 
 # Access Swagger UI at: http://localhost:8081
 # Stop when done
-docker-compose -f docker-compose.swagger.yml down
+podman-compose -f docker-compose.swagger.yml down
 ```
 
-#### Option 2: Using Docker directly
+#### Option 2: Using Podman directly
 
 ```bash
 # From the project root directory
-docker run -p 8081:8080 \
+podman run -p 8081:8080 \
   -e SWAGGER_JSON=/openapi/handybookshelf-api.yaml \
   -v $(pwd)/openapi:/openapi:ro \
   swaggerapi/swagger-ui

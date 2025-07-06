@@ -1,14 +1,15 @@
-package com.handybookshelf.infrastructure
+package com.handybookshelf
+package infrastructure
 
 import cats.effect.IO
 import cats.syntax.all.*
-import software.amazon.awssdk.services.dynamodb.{DynamoDbClient as AwsDynamoDbClient}
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient as AwsDynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.*
+
 import scala.jdk.CollectionConverters.*
-import io.circe.{Json, parser}
+import io.circe.*
 import io.circe.syntax.*
-import com.handybookshelf.domain.{Book, BookId}
-import com.handybookshelf.util.NES
+import domain.{Book, BookId}
 
 trait DynamoDBRepository[F[_]] {
   def put(key: String, value: Json): F[Unit]
@@ -126,7 +127,7 @@ trait BookDynamoDBRepository[F[_]] {
 
 class BookDynamoDBRepositoryImpl(
   underlying: DynamoDBRepository[IO]
-) extends BookDynamoDBRepository[IO] {
+)(using encoder: Codec[Book]) extends BookDynamoDBRepository[IO] {
 
   def saveBook(book: Book): IO[Unit] = 
     underlying.put(book.id.toString, book.asJson)

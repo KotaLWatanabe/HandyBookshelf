@@ -3,9 +3,9 @@ package domain
 
 import cats.data.NonEmptyList
 import cats.kernel.Eq
-import com.handybookshelf.util.CurrentDateTimeGenerator._current
+import com.handybookshelf.util.TimestampGenerator._current
 import org.atnos.eff.Eff
-import util.{CurrentDateTimeGenerator, ISBN}
+import util.{TimestampGenerator, ISBN}
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
@@ -15,10 +15,10 @@ final case class Book private (id: BookId, title: NES) {
 }
 object Book:
   def generate[R: _current](isbnStr: NES, title: NES): Eff[R, Book] =
-    CurrentDateTimeGenerator.now.map(timestamp => Book(BookId.create(isbnStr, timestamp), title))
+    TimestampGenerator.now.map(timestamp => Book(BookId.create(isbnStr, timestamp), title))
 
   def generateFromISBN[R: _current](isbn: ISBN, title: NES): Eff[R, Book] =
-    CurrentDateTimeGenerator.now.map(timestamp => Book(BookId.createFromISBN(isbn, timestamp), title))
+    TimestampGenerator.now.map(timestamp => Book(BookId.createFromISBN(isbn, timestamp), title))
 
 final case class BookReference(book: Book, tags: Seq[Tag], devices: NonEmptyList[Device]) {
   val bookId: BookId = book.id

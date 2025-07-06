@@ -5,10 +5,12 @@ package routes
 
 import cats.effect.Async
 import cats.syntax.all.*
-import com.handybookshelf.controller.api.endpoints.BookEndpoints.*
-import com.handybookshelf.usecase.{RegisterBookUseCase, RegisterBookCommand, UseCaseError}
+import api.endpoints.*
+import usecase.{RegisterBookCommand, RegisterBookUseCase, UseCaseError}
 import org.http4s.HttpRoutes
 import sttp.tapir.server.http4s.Http4sServerInterpreter
+import api.ApiResponseCodecs.given
+import api.endpoints.BookEndpoints.*
 
 class BookRoutes[F[_]: Async](
     registerBookUseCase: RegisterBookUseCase
@@ -20,30 +22,28 @@ class BookRoutes[F[_]: Async](
       title = request.title
     )
     
-    registerBookUseCase.execute(command).flatMap { result =>
-      result match {
-        case Left(error) =>
-          val errorResponse = error match {
-            case UseCaseError.ValidationError(msg) =>
-              BookRegistrationError(error = "VALIDATION_ERROR", details = Some(msg))
-            case UseCaseError.NotFoundError(msg) =>
-              BookRegistrationError(error = "NOT_FOUND", details = Some(msg))
-            case UseCaseError.ExternalServiceError(msg) =>
-              BookRegistrationError(error = "EXTERNAL_SERVICE_ERROR", details = Some(msg))
-            case UseCaseError.InternalError(msg) =>
-              BookRegistrationError(error = "INTERNAL_ERROR", details = Some(msg))
-            case UseCaseError.TimeoutError(msg) =>
-              BookRegistrationError(error = "TIMEOUT_ERROR", details = Some(msg))
-          }
-          Async[F].pure(Left(errorResponse))
-          
-        case Right(success) =>
-          val response = RegisterBookResponse(
-            bookId = success.bookId,
-            message = success.message
-          )
-          Async[F].pure(Right(response))
-      }
+    registerBookUseCase.execute(command).flatMap {
+      case Left(error) =>
+        val errorResponse = error match {
+          case UseCaseError.ValidationError(msg) =>
+            BookRegistrationError(error = "VALIDATION_ERROR", details = Some(msg))
+          case UseCaseError.NotFoundError(msg) =>
+            BookRegistrationError(error = "NOT_FOUND", details = Some(msg))
+          case UseCaseError.ExternalServiceError(msg) =>
+            BookRegistrationError(error = "EXTERNAL_SERVICE_ERROR", details = Some(msg))
+          case UseCaseError.InternalError(msg) =>
+            BookRegistrationError(error = "INTERNAL_ERROR", details = Some(msg))
+          case UseCaseError.TimeoutError(msg) =>
+            BookRegistrationError(error = "TIMEOUT_ERROR", details = Some(msg))
+        }
+        Async[F].pure(Left(errorResponse))
+
+      case Right(success) =>
+        val response = RegisterBookResponse(
+          bookId = success.bookId,
+          message = success.message
+        )
+        Async[F].pure(Right(response))
     }
 
   private def handleGetBook(bookId: String): F[Either[BookRegistrationError, RegisterBookResponse]] =

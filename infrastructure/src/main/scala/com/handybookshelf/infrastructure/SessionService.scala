@@ -4,12 +4,12 @@ package infrastructure
 import cats.effect.IO
 import cats.effect.kernel.Ref
 import cats.syntax.traverse.*
-import domain.UserAccountId
-import util.Timestamp
-import java.time.Instant
+import com.handybookshelf.domain.UserAccountId
+import com.handybookshelf.util.Timestamp
+import io.circe.generic.semiauto.deriveCodec
+import io.circe.{Codec, Decoder, Encoder}
+
 import java.util.UUID
-import io.circe.{Decoder, Encoder}
-import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 // Session domain models
 final case class SessionId(value: String) extends AnyVal
@@ -17,35 +17,35 @@ final case class SessionId(value: String) extends AnyVal
 final case class UserSession(
     userAccountId: UserAccountId,
     sessionId: SessionId,
-    loginTime: Instant,
-    lastActivity: Instant,
-    expirationTime: Instant
+    loginTime: Timestamp,
+    lastActivity: Timestamp,
+    expirationTime: Timestamp
 ):
-  def isValid: Boolean   = expirationTime.isAfter(Instant.now())
-  def isExpired: Boolean = !isValid
+  def isValid: IO[Boolean]   = expirationTime.isAfterNow
+  def isExpired: IO[Boolean] = isValid.map(!_)
 
 // Session events for event sourcing
 sealed trait SessionEvent
 final case class UserLoggedIn(
     userAccountId: UserAccountId,
     sessionId: SessionId,
-    loginTime: Instant
+    loginTime: Timestamp
 ) extends SessionEvent
 
 final case class UserLoggedOut(
     userAccountId: UserAccountId,
     sessionId: SessionId,
-    logoutTime: Instant
+    logoutTime: Timestamp
 ) extends SessionEvent
 
 final case class SessionExtended(
     sessionId: SessionId,
-    newExpirationTime: Instant
+    newExpirationTime: Timestamp
 ) extends SessionEvent
 
 final case class SessionExpired(
     sessionId: SessionId,
-    expiredTime: Instant
+    expiredTime: Timestamp
 ) extends SessionEvent
 
 // Session configuration
@@ -75,7 +75,7 @@ final case class UserStatusResult(
     userAccountId: UserAccountId,
     isLoggedIn: Boolean,
     sessionId: Option[SessionId] = None,
-    loginTime: Option[Instant] = None
+    loginTime: Option[Timestamp] = None
 ) extends SessionResult
 
 final case class ExtensionResult(
@@ -84,12 +84,23 @@ final case class ExtensionResult(
 ) extends SessionResult
 
 // JSON codecs for persistence
-given sessionIdEncoder: Encoder[SessionId]       = Encoder.encodeString.contramap(_.value)
-given sessionIdDecoder: Decoder[SessionId]       = Decoder.decodeString.map(SessionId.apply)
-given userSessionEncoder: Encoder[UserSession]   = deriveEncoder
-given userSessionDecoder: Decoder[UserSession]   = deriveDecoder
-given sessionEventEncoder: Encoder[SessionEvent] = deriveEncoder
-given sessionEventDecoder: Decoder[SessionEvent] = deriveDecoder
+given sessionIdEncoder: Encoder[SessionId]         = Encoder.encodeString.contramap(_.value)
+given sessionIdDecoder: Decoder[SessionId]         = Decoder.decodeString.map(SessionId.apply)
+given userAccountIdEncoder: Encoder[UserAccountId] = Encoder.encodeString.contramap(_.breachEncapsulationIdAsString)
+given userAccountIdDecoder: Decoder[UserAccountId] =
+  Decoder.decodeString.map(s => UserAccountId.create(wvlet.airframe.ulid.ULID.fromString(s)))
+given timestampEncoder: Encoder[Timestamp] = Encoder.encodeString.contramap(_.toString)
+given timestampDecoder: Decoder[Timestamp] = Decoder.decodeString.emap { s =>
+  try {
+    Right(
+      Timestamp.fromEpochMillis(java.time.LocalDateTime.parse(s).atZone(Timestamp.systemZoneId).toInstant.toEpochMilli)
+    )
+  } catch {
+    case _: Exception => Left(s"Invalid timestamp format: $s")
+  }
+}
+given userSessionCodec: Codec[UserSession]     = deriveCodec
+given sessionEventEncoder: Codec[SessionEvent] = deriveCodec
 
 // Session service trait
 trait SessionService:
@@ -110,8 +121,9 @@ class CatsEffectSessionService(
     for {
       currentSessions <- sessionStore.get
       existingSession = currentSessions.values.find(_.userAccountId == userAccountId)
-      result <- existingSession match
-        case Some(session) if session.isValid =>
+      sessionIsValidOpt <- existingSession.traverse(session => session.isValid.map((session, _)))
+      result <- sessionIsValidOpt match
+        case Some((session, isValid)) if isValid =>
           IO.pure(
             LoginResult(
               success = true,
@@ -127,10 +139,11 @@ class CatsEffectSessionService(
     for {
       currentSessions <- sessionStore.get
       existingSession = currentSessions.values.find(_.userAccountId == userAccountId)
-      result <- existingSession match
-        case Some(session) if session.isValid =>
+      sessionIsValidOpt <- existingSession.traverse(session => session.isValid.map((session, _)))
+      result <- sessionIsValidOpt match
+        case Some((session, isValid)) if isValid =>
           for {
-            now <- IO(Instant.now())
+            now <- Timestamp.now
             logoutEvent = UserLoggedOut(userAccountId, session.sessionId, now)
             _ <- persistEvent(userAccountId, logoutEvent)
             _ <- sessionStore.update(_.removed(session.sessionId))
@@ -151,8 +164,9 @@ class CatsEffectSessionService(
     for {
       currentSessions <- sessionStore.get
       existingSession = currentSessions.values.find(_.userAccountId == userAccountId)
-    } yield existingSession match
-      case Some(session) if session.isValid =>
+      sessionIsValidOpt <- existingSession.traverse(session => session.isValid.map((session, _)))
+    } yield sessionIsValidOpt match
+      case Some((session, isValid)) if isValid =>
         UserStatusResult(
           userAccountId = userAccountId,
           isLoggedIn = true,
@@ -167,12 +181,13 @@ class CatsEffectSessionService(
 
   def extendSession(sessionId: SessionId): IO[ExtensionResult] =
     for {
-      currentSessions <- sessionStore.get
-      result <- currentSessions.get(sessionId) match
-        case Some(session) if session.isValid =>
+      currentSessions   <- sessionStore.get
+      sessionIsValidOpt <- currentSessions.get(sessionId).traverse(session => session.isValid.map((session, _)))
+      result <- sessionIsValidOpt match
+        case Some((session, isValid)) if isValid =>
           for {
-            now <- IO(Instant.now())
-            newExpiration = now.plusSeconds(SessionConfig.EXTENSION_DURATION_HOURS * 3600)
+            now <- Timestamp.now
+            newExpiration = now.plusHours(SessionConfig.EXTENSION_DURATION_HOURS)
             extendEvent   = SessionExtended(sessionId, newExpiration)
             _ <- persistEvent(session.userAccountId, extendEvent)
             updatedSession = session.copy(
@@ -195,9 +210,10 @@ class CatsEffectSessionService(
 
   def validateSession(sessionId: SessionId): IO[ValidationResult] =
     for {
-      currentSessions <- sessionStore.get
-    } yield currentSessions.get(sessionId) match
-      case Some(session) if session.isValid =>
+      currentSessions   <- sessionStore.get
+      sessionIsValidOpt <- currentSessions.get(sessionId).traverse(session => session.isValid.map((session, _)))
+    } yield sessionIsValidOpt match
+      case Some((session, isValid)) if isValid =>
         ValidationResult(
           isValid = true,
           userAccountId = Some(session.userAccountId)
@@ -208,22 +224,22 @@ class CatsEffectSessionService(
   def cleanupExpiredSessions: IO[Unit] =
     for {
       currentSessions <- sessionStore.get
-      now             <- IO(Instant.now())
-      expiredSessions = currentSessions.filter { case (_, session) => session.isExpired }
-      _ <- expiredSessions.toList.traverse { case (sessionId, session) =>
+      now             <- Timestamp.now
+      expiredSessions <- currentSessions.values.toList.traverse(session => session.isExpired.map((session, _)))
+      _ <- expiredSessions.traverse { case (session, _) =>
         for {
-          expiredEvent <- IO.pure(SessionExpired(sessionId, now))
+          expiredEvent <- IO.pure(SessionExpired(session.sessionId, now))
           _            <- persistEvent(session.userAccountId, expiredEvent)
         } yield ()
       }
-      _ <- sessionStore.update(sessions => sessions -- expiredSessions.keys)
+      _ <- sessionStore.update(sessions => sessions.removedAll(expiredSessions.map(_._1.sessionId)))
     } yield ()
 
   private def createNewSession(userAccountId: UserAccountId): IO[LoginResult] =
     for {
       sessionId <- IO(SessionId(UUID.randomUUID().toString))
-      now       <- IO(Instant.now())
-      expirationTime = now.plusSeconds(SessionConfig.SESSION_DURATION_HOURS * 3600)
+      now       <- Timestamp.now
+      expirationTime = now.plusHours(SessionConfig.SESSION_DURATION_HOURS)
       loginEvent     = UserLoggedIn(userAccountId, sessionId, now)
       _ <- persistEvent(userAccountId, loginEvent)
       session = UserSession(
@@ -240,13 +256,13 @@ class CatsEffectSessionService(
       sessionId = Some(sessionId)
     )
 
-  private def persistEvent(userAccountId: UserAccountId, event: SessionEvent): IO[Unit] =
+  private def persistEvent(userAccountId: UserAccountId, sessionEvent: SessionEvent): IO[Unit] =
     val streamId = StreamId(s"UserSession-${userAccountId.breachEncapsulationIdAsString}")
     for {
       timestamp <- Timestamp.now
       storedEvent = new StoredEvent {
         type E = SessionEvent
-        def event: SessionEvent = event
+        def event: SessionEvent = sessionEvent
         def metadata: StreamMetadata = StreamMetadata(
           streamId = streamId,
           version = EventVersion.any, // Let the event store handle versioning
@@ -263,13 +279,10 @@ object SessionService:
       sessionStore <- Ref.of[IO, Map[SessionId, UserSession]](Map.empty)
       service = new CatsEffectSessionService(eventStore, sessionStore)
       // Load existing sessions from event store on startup
-      _ <- loadExistingSessions(eventStore, sessionStore)
+      _ <- loadExistingSessions()
     } yield service
 
-  private def loadExistingSessions(
-      eventStore: EventStore,
-      sessionStore: Ref[IO, Map[SessionId, UserSession]]
-  ): IO[Unit] =
+  private def loadExistingSessions(): IO[Unit] =
     // This would need to be implemented to replay events from the event store
     // For now, we start with an empty session store
     IO.unit

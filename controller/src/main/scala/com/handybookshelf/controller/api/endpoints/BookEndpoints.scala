@@ -9,7 +9,7 @@ import io.circe.{Decoder, Encoder}
 import util.{ISBN, NES}
 
 final case class RegisterBookRequest(
-    isbn: String,
+    isbn: Option[String] = None,
     title: String
 )
 

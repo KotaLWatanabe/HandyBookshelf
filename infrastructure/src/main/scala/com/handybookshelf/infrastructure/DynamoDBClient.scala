@@ -3,7 +3,7 @@ package com.handybookshelf.infrastructure
 import cats.effect.{IO, Resource}
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
 import software.amazon.awssdk.regions.Region
-import software.amazon.awssdk.services.dynamodb.{DynamoDbClient as AwsDynamoDbClient}
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient as AwsDynamoDbClient
 import java.net.URI
 
 object DynamoDBClient {
@@ -30,7 +30,7 @@ object DynamoDBClient {
           .region(region)
         
         // For local development, override endpoint and use dummy credentials
-        if (endpoint.getHost == "localhost") {
+        val _ = if (endpoint.getHost == "localhost") {
           builder
             .endpointOverride(endpoint)
             .credentialsProvider(
@@ -38,10 +38,9 @@ object DynamoDBClient {
                 AwsBasicCredentials.create("dummy", "dummy")
               )
             )
-        }
+        } else builder
         
         builder.build()
       }
     )(client => IO.delay(client.close()))
-
 }

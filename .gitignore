@@ -13,6 +13,7 @@
 
 .DS_Store
 Thumbs.db
+.env
 
 *.log
 *.code-workspace

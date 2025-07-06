@@ -62,7 +62,7 @@
 ### 手動実行
 ```bash
 # ScyllaDBに接続
-docker-compose exec scylladb cqlsh -u cassandra -p cassandra
+podman-compose exec scylladb cqlsh -u cassandra -p cassandra
 
 # 各マイグレーションを順番に実行
 SOURCE '/docker-entrypoint-initdb.d/V001__Create_Event_Store_Tables.cql';

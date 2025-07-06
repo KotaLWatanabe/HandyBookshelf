@@ -1,66 +1,28 @@
 package com.handybookshelf
 package infrastructure
 
-import cats.effect.{IO, Resource}
+import cats.effect.IO
 import cats.syntax.all.*
-import io.circe.{Decoder, Encoder, Json}
-import io.circe.parser.decode
+import com.handybookshelf.domain.UserAccountId
+import io.circe.generic.semiauto.*
 import io.circe.syntax.*
-import org.http4s.{Entity, EntityDecoder, EntityEncoder, Headers, Method, Request, Response, Status, Uri}
-import org.http4s.client.Client
-import org.http4s.headers.{Authorization, `Content-Type`}
+import io.circe.{Codec, Decoder, Encoder, Json}
+import org.http4s.*
 import org.http4s.circe.*
-import domain.{BookId, UserAccountId, BookReference, Filters}
-import util.Timestamp
+import org.http4s.client.Client
+import org.http4s.headers.`Content-Type`
+
 import java.time.Instant
-import scala.concurrent.ExecutionContext
 
 /**
  * Elasticsearch client for CQRS read model operations Handles book search, indexing, and query operations
  */
-class ElasticsearchClient(client: Client[IO], baseUri: Uri)(using ExecutionContext):
+class ElasticsearchClient(client: Client[IO], baseUri: Uri):
+  import ElasticsearchClient.*
 
   private val booksIndex    = "handybookshelf-books"
   private val eventsIndex   = "handybookshelf-events"
   private val sessionsIndex = "handybookshelf-sessions"
-
-  /**
-   * Book document for Elasticsearch indexing
-   */
-  case class BookDocument(
-      bookId: String,
-      userAccountId: String,
-      title: String,
-      isbn: Option[String],
-      authors: List[String],
-      tags: List[String],
-      location: Option[String],
-      status: String,
-      addedAt: Instant,
-      updatedAt: Instant
-  )
-
-  /**
-   * Search result wrapper
-   */
-  case class SearchResult[T](
-      hits: SearchHits[T],
-      took: Int,
-      timedOut: Boolean
-  )
-
-  case class SearchHits[T](
-      total: SearchTotal,
-      hits: List[SearchHit[T]]
-  )
-
-  case class SearchTotal(value: Long, relation: String)
-
-  case class SearchHit[T](
-      id: String,
-      source: T,
-      score: Option[Double]
-  )
 
   /**
    * Index a book document
@@ -173,7 +135,7 @@ class ElasticsearchClient(client: Client[IO], baseUri: Uri)(using ExecutionConte
    * Delete a book document
    */
   def deleteBook(userAccountId: String, bookId: String): IO[Unit] =
-    val uri     = baseUri / booksIndex / "_doc" / bookId
+    val uri     = baseUri / booksIndex / "_doc" / userAccountId / bookId
     val request = Request[IO](method = Method.DELETE, uri = uri)
 
     client.expect[Json](request).void.handleErrorWith { error =>
@@ -341,54 +303,91 @@ class ElasticsearchClient(client: Client[IO], baseUri: Uri)(using ExecutionConte
  * Elasticsearch client factory
  */
 object ElasticsearchClient:
+  /**
+   * Book document for Elasticsearch indexing
+   */
+  case class BookDocument(
+      bookId: String,
+      userAccountId: String,
+      title: String,
+      isbn: Option[String],
+      authors: List[String],
+      tags: List[String],
+      location: Option[String],
+      status: String,
+      addedAt: Instant,
+      updatedAt: Instant
+  )
 
-  def create(client: Client[IO], baseUrl: String = "http://localhost:9200"): IO[ElasticsearchClient] =
+  /**
+   * Search result wrapper
+   */
+  case class SearchResult(
+      hits: SearchHits,
+      took: Int,
+      timedOut: Boolean
+  )
+
+  case class SearchHits(
+      total: SearchTotal,
+      hits: List[SearchHit]
+  )
+
+  case class SearchTotal(value: Long, relation: String)
+
+  case class SearchHit(
+      id: String,
+      source: Json,
+      score: Option[Double]
+  )
+
+  def create(client: Client[IO], baseUrl: String = "http://localhost:9200")
+  //          (using ExecutionContext)
+      : IO[ElasticsearchClient] =
     Uri.fromString(baseUrl) match {
       case Right(uri)  => IO.pure(new ElasticsearchClient(client, uri))
       case Left(error) => IO.raiseError(new IllegalArgumentException(s"Invalid Elasticsearch URL: $error"))
     }
 
-  def createFromEnv(client: Client[IO]): IO[ElasticsearchClient] =
+  def createFromEnv(client: Client[IO])
+  //                 (using ExecutionContext)
+      : IO[ElasticsearchClient] =
     val baseUrl = sys.env.getOrElse("ELASTICSEARCH_HOSTS", "http://localhost:9200")
     create(client, baseUrl)
 
   /**
    * Given instances for JSON codecs
    */
-  given Encoder[ElasticsearchClient.BookDocument]    = io.circe.generic.semiauto.deriveEncoder
-  given Decoder[ElasticsearchClient.BookDocument]    = io.circe.generic.semiauto.deriveDecoder
-  given Encoder[ElasticsearchClient.SearchResult[?]] = io.circe.generic.semiauto.deriveEncoder
-  given Decoder[ElasticsearchClient.SearchResult[?]] = io.circe.generic.semiauto.deriveDecoder
-  given Encoder[ElasticsearchClient.SearchHits[?]]   = io.circe.generic.semiauto.deriveEncoder
-  given Decoder[ElasticsearchClient.SearchHits[?]]   = io.circe.generic.semiauto.deriveDecoder
-  given Encoder[ElasticsearchClient.SearchTotal]     = io.circe.generic.semiauto.deriveEncoder
-  given Decoder[ElasticsearchClient.SearchTotal]     = io.circe.generic.semiauto.deriveDecoder
-  given Encoder[ElasticsearchClient.SearchHit[?]]    = io.circe.generic.semiauto.deriveEncoder
-  given Decoder[ElasticsearchClient.SearchHit[?]]    = io.circe.generic.semiauto.deriveDecoder
+  given Codec[BookDocument] = deriveCodec
+  given Codec[SearchResult] = deriveCodec
+  given Codec[SearchHit]    = deriveCodec
+  given Codec[SearchHits]   = deriveCodec
+  given Codec[SearchTotal]  = deriveCodec
 
 /**
  * Book projection service for CQRS read model updates
  */
 class BookProjectionService(esClient: ElasticsearchClient):
   import ElasticsearchClient.*
+
   /**
    * Handle BookAdded event
    */
   def handleBookAdded(
       userAccountId: UserAccountId,
-      bookId: BookId,
-      bookReference: BookReference,
-      filters: Filters,
+//      bookId: BookId,
+//      bookReference: BookReference,
+//      filters: Filters,
       timestamp: Instant
   ): IO[Unit] =
-    val bookDoc = esClient.BookDocument(
-      bookId = bookId.breachEncapsulationOfBookId,
+    val bookDoc = BookDocument(
+      bookId = ???,
       userAccountId = userAccountId.breachEncapsulationIdAsString,
-      title = bookReference.title,
-      isbn = bookReference.isbn.map(_.toString),
-      authors = bookReference.authors.toList,
-      tags = filters.filters.map(_.toString).toList,
-      location = bookReference.location.map(_.toString),
+      title = ???,
+      isbn = ???,
+      authors = ???,
+      tags = ???,
+      location = ???,
       status = "available",
       addedAt = timestamp,
       updatedAt = timestamp
@@ -400,10 +399,7 @@ class BookProjectionService(esClient: ElasticsearchClient):
    * Handle BookRemoved event
    */
   def handleBookRemoved(
-      userAccountId: UserAccountId,
-      bookId: BookId
+//      userAccountId: UserAccountId,
+//      bookId: BookId
   ): IO[Unit] =
-    esClient.deleteBook(
-      userAccountId.breachEncapsulationIdAsString,
-      bookId.breachEncapsulationOfBookId
-    )
+    esClient.deleteBook(userAccountId = ???, bookId = ???)

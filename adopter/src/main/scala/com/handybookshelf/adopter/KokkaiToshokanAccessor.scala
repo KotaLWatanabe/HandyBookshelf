@@ -16,7 +16,7 @@ import scala.util.Try
 import scala.xml.*
 
 // https://iss.ndl.go.jp/information/api/riyou/#sec3
-object KokkaiToshokanAccessor:
+object かKokkaiToshokanAccessor:
 
   import org.http4s.QueryParamEncoder.stringQueryParamEncoder
   private def searchAPIURL(title: String) =
@@ -35,25 +35,25 @@ object KokkaiToshokanAccessor:
   case class AdopterError(message: String, cause: Option[Throwable] = None)
   def searchBooks(
       title: String = bookTitle
-  ): IO[Either[AdopterError, Set[Book]]] =
-    httpClientBuilt.use { client =>
-      client.expect[String](searchAPIURL(title)).map { xmlStr =>
-        for {
-          xml <- Try(XML.loadString(xmlStr)).toEither
-            .leftMap(e => AdopterError(e.getMessage))
-          books = xmlToBooks(xml).toMap.map { case (isbn, title) =>
-            Book.generateFromISBN(isbn, title.nes)
-          }.toSet
-        } yield books
-      }
-    }
+  ): IO[Either[AdopterError, Set[Book]]] = ???
+//    httpClientBuilt.use { client =>
+//      client.expect[String](searchAPIURL(title)).map { xmlStr =>
+//        for {
+//          xml <- Try(XML.loadString(xmlStr)).toEither
+//            .leftMap(e => AdopterError(e.getMessage))
+//          books = xmlToBooks(xml).toMap.map { case (isbn, title) =>
+//            Book.generateFromISBN(isbn, title.nes)
+//          }.toSet
+//        } yield books
+//      }
+//    }
 
   private def xmlToBooks(elem: Elem): Seq[(ISBN, String)] =
     for {
       item  <- elem \\ "item"
       title <- (item \ "title").headOption.map(_.text)
-      isbnStr: String <- isbnTagPattern
+      isbnStr <- isbnTagPattern
         .findFirstIn(item.toString)
-        .map(isbnSubStr)
+        .map(isbnSubStr(_).nes)
       isbn <- isbnStr.isbnOpt
     } yield (isbn, title)

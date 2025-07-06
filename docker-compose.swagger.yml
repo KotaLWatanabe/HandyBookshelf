@@ -21,7 +21,7 @@ services:
   # handybookshelf-api:
   #   build:
   #     context: .
-  #     dockerfile: Dockerfile
+  #     dockerfile: containers/Dockerfile
   #   container_name: handybookshelf-api
   #   ports:
   #     - "8080:8080"
@@ -35,5 +35,5 @@ networks:
     driver: bridge
 
 # Example usage:
-# docker-compose -f docker-compose.swagger.yml up -d swagger-ui
+# podman-compose -f docker-compose.swagger.yml up -d swagger-ui
 # Then access Swagger UI at: http://localhost:8081

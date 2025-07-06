@@ -109,10 +109,13 @@ object BookshelfActor:
     def validateSessionForUser(sessionId: String, userAccountId: UserAccountId): Boolean
 
   // JSON codecs for persistence
-  given Encoder[BookshelfEvent] = deriveEncoder
-  given Decoder[BookshelfEvent] = deriveDecoder
-  given Encoder[BookshelfState] = deriveEncoder
-  given Decoder[BookshelfState] = deriveDecoder
+  given userAccountIdEncoder: Encoder[UserAccountId] = Encoder.encodeString.contramap(_.breachEncapsulationIdAsString)
+  given userAccountIdDecoder: Decoder[UserAccountId] = Decoder.decodeString.map(s => UserAccountId.create(wvlet.airframe.ulid.ULID.fromString(s)))
+  // TODO: Add codecs for BookReference, Bookshelf, etc.
+  // given Encoder[BookshelfEvent] = deriveEncoder
+  // given Decoder[BookshelfEvent] = deriveDecoder
+  // given Encoder[BookshelfState] = deriveEncoder
+  // given Decoder[BookshelfState] = deriveDecoder
 
   def apply(userAccountId: UserAccountId, sessionValidator: SessionValidator): Behavior[BookshelfCommand] =
     EventSourcedBehavior[BookshelfCommand, BookshelfEvent, BookshelfState](

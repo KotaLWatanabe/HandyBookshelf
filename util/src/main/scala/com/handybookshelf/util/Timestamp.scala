@@ -1,7 +1,10 @@
 package com.handybookshelf
 package util
 
+import cats.Eval
+import com.handybookshelf.util.Timestamp.systemZoneId
 import org.atnos.eff.*
+import org.atnos.eff.all._eval
 
 import java.time.{ZoneId, ZonedDateTime}
 
@@ -9,12 +12,18 @@ final case class Timestamp private (private val value: ZonedDateTime) extends An
   private[util] def epochMillis: Long = value.toInstant.toEpochMilli
   override def toString: String       = value.toLocalDateTime.toString
 
+  def plusHours(hours: Long): Timestamp =
+    Timestamp(value.plusSeconds(hours * 3600))
+
+  def isAfter(other: Timestamp): Boolean =
+    value.isAfter(other.value)
+
 object Timestamp:
   private[util] def apply(value: ZonedDateTime): Timestamp = new Timestamp(value)
-  val systemZoneId: ZoneId = ZoneId.of("Asia/Tokyo")
-  val init: Timestamp      = Timestamp.fromEpochMillis(0L)
+  val systemZoneId: ZoneId                                 = ZoneId.of("Asia/Tokyo")
+  val init: Timestamp                                      = Timestamp.fromEpochMillis(0L)
 
-  def fromEpochMillis(epochMillis: Long): Timestamp =
+  private[util] def fromEpochMillis(epochMillis: Long): Timestamp =
     Timestamp(
       ZonedDateTime.ofInstant(
         java.time.Instant.ofEpochMilli(epochMillis),
@@ -22,14 +31,6 @@ object Timestamp:
       )
     )
 
-  import cats.effect.IO
-  def now: IO[Timestamp] = IO(Timestamp(ZonedDateTime.now(systemZoneId)))
-
-type CurrentDT[A] = A => Timestamp
-object CurrentDT:
-  import Timestamp.*
-  def apply[A]: CurrentDT[A] = _ => Timestamp(ZonedDateTime.now(systemZoneId))
-
-object CurrentDateTimeGenerator:
-  type _current[R] = CurrentDT |= R
-  def now[R: _current]: Eff[R, Timestamp] = Eff.send[CurrentDT[*], R, Timestamp](CurrentDT.apply)
+object TimestampGenerator:
+  def now[R: _eval]: Eff[R, Timestamp] =
+    Eff.send[Eval[*], R, Timestamp](Eval.later(Timestamp(ZonedDateTime.now(systemZoneId))))

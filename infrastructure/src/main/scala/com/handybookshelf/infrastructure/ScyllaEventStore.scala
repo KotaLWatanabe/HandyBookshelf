@@ -4,26 +4,22 @@ package infrastructure
 import cats.effect.{IO, Resource}
 import cats.syntax.all.*
 import com.datastax.oss.driver.api.core.CqlSession
-import com.datastax.oss.driver.api.core.cql.{PreparedStatement, Row, SimpleStatement}
-import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata
-import com.datastax.oss.driver.api.core.uuid.Uuids
-import io.circe.{Decoder, Encoder}
+import com.datastax.oss.driver.api.core.cql.{PreparedStatement, Row}
+import com.handybookshelf.domain.DomainEvent
+import com.handybookshelf.util.Timestamp
+import io.circe.*
 import io.circe.parser.decode
 import io.circe.syntax.*
-import util.Timestamp
-import domain.DomainEvent
+
 import java.net.InetSocketAddress
 import java.time.Instant
-import java.util.concurrent.CompletionStage
 import scala.jdk.CollectionConverters.*
-import scala.jdk.FutureConverters.*
-import scala.concurrent.ExecutionContext
 
 /**
  * ScyllaDB implementation of EventStore for event sourcing Provides persistent storage for domain events with optimized
  * read/write patterns
  */
-class ScyllaEventStore(session: CqlSession)(using ExecutionContext) extends EventStore:
+class ScyllaEventStore(session: CqlSession)(using Encoder[DomainEvent], Codec[StreamMetadata]) extends EventStore:
 
   // Prepared statements for optimized queries
   private lazy val insertEventStmt: IO[PreparedStatement] = IO.fromCompletionStage(
@@ -76,7 +72,7 @@ class ScyllaEventStore(session: CqlSession)(using ExecutionContext) extends Even
           session.executeAsync(stmt.bind(streamId.value))
         )
       )
-      events <- IO.pure(resultSet.asScala.map(rowToStoredEvent).toList)
+      events <- IO.pure(resultSet.map(rowToStoredEvent).currentPage().asScala.toList)
     } yield events
 
   override def getEventsFromVersion(
@@ -90,7 +86,7 @@ class ScyllaEventStore(session: CqlSession)(using ExecutionContext) extends Even
           session.executeAsync(stmt.bind(streamId.value, Long.box(fromVersion.value)))
         )
       )
-      events <- IO.pure(resultSet.asScala.map(rowToStoredEvent).toList)
+      events <- IO.pure(resultSet.map(rowToStoredEvent).currentPage().asScala.toList)
     } yield events
 
   override def saveEvents(
@@ -134,7 +130,7 @@ class ScyllaEventStore(session: CqlSession)(using ExecutionContext) extends Even
       streamId: StreamId,
       events: List[StoredEvent],
       currentVersion: Option[Long]
-  ): IO[Unit] =
+  )(using Encoder[DomainEvent]): IO[Unit] =
     for {
       stmt <- insertEventStmt
       startSeq = currentVersion.getOrElse(0L) + 1
@@ -164,10 +160,10 @@ class ScyllaEventStore(session: CqlSession)(using ExecutionContext) extends Even
   private def rowToStoredEvent(row: Row): StoredEvent =
     val persistenceId = row.getString("persistence_id")
     val sequenceNr    = row.getLong("sequence_nr")
-    val timestamp     = row.getInstant("event_timestamp")
-    val eventType     = row.getString("event_type")
-    val eventData     = row.getString("event_data")
-    val metadataJson  = row.getString("metadata")
+//    val timestamp     = row.getInstant("event_timestamp")
+//    val eventType     = row.getString("event_type")
+    val eventData    = row.getString("event_data")
+    val metadataJson = row.getString("metadata")
 
     // Simple implementation - in production, you'd want proper event deserialization
     new StoredEvent {
@@ -175,12 +171,13 @@ class ScyllaEventStore(session: CqlSession)(using ExecutionContext) extends Even
       def event: E = eventData
       def metadata: StreamMetadata = decode[StreamMetadata](metadataJson) match {
         case Right(meta) => meta
-        case Left(error) =>
+        case Left(_)     =>
           // Fallback metadata
           StreamMetadata(
             StreamId(persistenceId),
             EventVersion(sequenceNr),
-            Timestamp(timestamp.toEpochMilli)
+            ???
+//            Timestamp(timestamp.toEpochMilli)
           )
       }
     }
@@ -238,9 +235,9 @@ object ScyllaSession:
           .map(_.split(",").toList)
           .getOrElse(List("localhost"))
         val port     = sys.env.get("SCYLLA_PORT").map(_.toInt).getOrElse(9042)
-        val keyspace = sys.env.get("SCYLLA_KEYSPACE").getOrElse("handybookshelf")
-        val username = sys.env.get("SCYLLA_USERNAME").getOrElse("cassandra")
-        val password = sys.env.get("SCYLLA_PASSWORD").getOrElse("cassandra")
+        val keyspace = sys.env.getOrElse("SCYLLA_KEYSPACE", "handybookshelf")
+        val username = sys.env.getOrElse("SCYLLA_USERNAME", "cassandra")
+        val password = sys.env.getOrElse("SCYLLA_PASSWORD", "cassandra")
 
         (hosts, port, keyspace, username, password)
       })
@@ -251,7 +248,7 @@ object ScyllaSession:
 /**
  * Repository implementations using ScyllaDB
  */
-class ScyllaUserSessionRepository(session: CqlSession)(using ExecutionContext):
+class ScyllaUserSessionRepository(session: CqlSession):
 
   private lazy val insertSessionStmt: IO[PreparedStatement] = IO.fromCompletionStage(
     IO.pure(
@@ -381,8 +378,7 @@ class ScyllaUserSessionRepository(session: CqlSession)(using ExecutionContext):
         .void
     } yield ()
 
-/**
- * Given instances for JSON serialization
- */
-given Encoder[StreamMetadata] = io.circe.generic.semiauto.deriveEncoder
-given Decoder[StreamMetadata] = io.circe.generic.semiauto.deriveDecoder
+//  /**
+//   * Given instances for JSON serialization
+//   */
+//  given Codec[StreamMetadata] = io.circe.generic.semiauto.deriveCodec[StreamMetadata]

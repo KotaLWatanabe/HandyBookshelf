@@ -8,25 +8,25 @@ echo "🚀 Starting HandyBookshelf services..."
 # Create scripts directory if it doesn't exist
 mkdir -p scripts
 
-# Check if Docker and Docker Compose are available
-if ! command -v docker &> /dev/null; then
-    echo "❌ Docker is not installed. Please install Docker first."
+# Check if Podman and Podman Compose are available
+if ! command -v podman &> /dev/null; then
+    echo "❌ Podman is not installed. Please install Podman first."
     exit 1
 fi
 
-if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
-    echo "❌ Docker Compose is not installed. Please install Docker Compose first."
+if ! command -v podman-compose &> /dev/null && ! podman compose version &> /dev/null; then
+    echo "❌ Podman Compose is not installed. Please install podman-compose first."
     exit 1
 fi
 
-# Set Docker Compose command (try new 'docker compose' first, fallback to 'docker-compose')
-if docker compose version &> /dev/null; then
-    DOCKER_COMPOSE="docker compose"
+# Set Podman Compose command (try 'podman compose' first, fallback to 'podman-compose')
+if podman compose version &> /dev/null; then
+    PODMAN_COMPOSE="podman compose"
 else
-    DOCKER_COMPOSE="docker-compose"
+    PODMAN_COMPOSE="podman-compose"
 fi
 
-echo "📋 Using Docker Compose: $DOCKER_COMPOSE"
+echo "📋 Using Podman Compose: $PODMAN_COMPOSE"
 
 # Function to wait for service
 wait_for_service() {
@@ -59,7 +59,7 @@ check_service_health() {
     
     case $service_name in
         "scylladb")
-            $DOCKER_COMPOSE exec -T scylladb cqlsh -u cassandra -p cassandra -e "DESCRIBE KEYSPACES;" > /dev/null 2>&1
+            $PODMAN_COMPOSE exec -T scylladb cqlsh -u cassandra -p cassandra -e "DESCRIBE KEYSPACES;" > /dev/null 2>&1
             ;;
         "elasticsearch")
             curl -f http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=30s > /dev/null 2>&1
@@ -76,7 +76,7 @@ check_service_health() {
 
 # Start infrastructure services only
 echo "🏗️  Starting infrastructure services..."
-$DOCKER_COMPOSE up -d scylladb elasticsearch redis
+$PODMAN_COMPOSE up -d scylladb elasticsearch redis
 
 # Wait for ScyllaDB
 wait_for_service "ScyllaDB" 9042
@@ -84,13 +84,13 @@ wait_for_service "ScyllaDB" 9042
 # Wait for Elasticsearch  
 wait_for_service "Elasticsearch" 9200
 
-echo "ℹ️  Note: HandyBookshelf application is not started in Docker."
+echo "ℹ️  Note: HandyBookshelf application is not started in Podman."
 echo "   To run the application locally, use: sbt \"project controller\" run"
 
 # Start optional services
 if [ "$2" == "--with-kibana" ] || [ "$1" == "--with-kibana" ]; then
     echo "📊 Starting Kibana..."
-    $DOCKER_COMPOSE up -d kibana
+    $PODMAN_COMPOSE up -d kibana
     wait_for_service "Kibana" 5601
 fi
 
@@ -102,15 +102,15 @@ echo "   🗄️  ScyllaDB CQL:       localhost:9042"
 echo "   🔍 Elasticsearch:      http://localhost:9200" 
 echo "   💾 Redis:              localhost:6379"
 
-if $DOCKER_COMPOSE ps kibana &> /dev/null; then
+if $PODMAN_COMPOSE ps kibana &> /dev/null; then
     echo "   📊 Kibana:             http://localhost:5601"
 fi
 
 echo ""
 echo "🔧 Management commands:"
-echo "   View logs:    $DOCKER_COMPOSE logs -f [service_name]"
-echo "   Stop all:     $DOCKER_COMPOSE down"
-echo "   Stop & clean: $DOCKER_COMPOSE down -v"
+echo "   View logs:    $PODMAN_COMPOSE logs -f [service_name]"
+echo "   Stop all:     $PODMAN_COMPOSE down"
+echo "   Stop & clean: $PODMAN_COMPOSE down -v"
 echo ""
 echo "🚀 To run HandyBookshelf application locally:"
 echo "   sbt \"project controller\" run"
@@ -119,11 +119,11 @@ echo ""
 
 # Show service status
 echo "📊 Service Status:"
-$DOCKER_COMPOSE ps
+$PODMAN_COMPOSE ps
 
 # Optional: Show initial logs
 if [ "$3" == "--logs" ] || [ "$2" == "--logs" ] || [ "$1" == "--logs" ]; then
     echo ""
     echo "📋 Recent logs:"
-    $DOCKER_COMPOSE logs --tail=20
+    $PODMAN_COMPOSE logs --tail=20
 fi

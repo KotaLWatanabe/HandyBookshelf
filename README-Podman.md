@@ -1,8 +1,8 @@
-# HandyBookshelf Docker Setup
+# HandyBookshelf Podman Setup
 
 ## 概要
 
-HandyBookshelfのDockerベース開発環境セットアップガイドです。ScyllaDB（イベントストア）とElasticsearch（クエリサイド）を含む完全なCQRSアーキテクチャを提供します。
+HandyBookshelfのPodmanベース開発環境セットアップガイドです。ScyllaDB（イベントストア）とElasticsearch（クエリサイド）を含む完全なCQRSアーキテクチャを提供します。
 
 ## アーキテクチャ
 
@@ -63,12 +63,12 @@ sbt "project controller" run
 
 ```bash
 # 全サービス状態確認
-docker-compose ps
+podman-compose ps
 
 # 個別サービスログ確認
-docker-compose logs -f handybookshelf-app
-docker-compose logs -f scylladb
-docker-compose logs -f elasticsearch
+podman-compose logs -f handybookshelf-app
+podman-compose logs -f scylladb
+podman-compose logs -f elasticsearch
 
 # ヘルスチェック
 curl http://localhost:8080/health
@@ -80,7 +80,7 @@ curl http://localhost:9200/_cluster/health
 #### ScyllaDB操作
 ```bash
 # CQLシェル接続
-docker-compose exec scylladb cqlsh -u cassandra -p cassandra
+podman-compose exec scylladb cqlsh -u cassandra -p cassandra
 
 # キースペース確認
 DESCRIBE KEYSPACES;
@@ -127,26 +127,26 @@ curl -X POST "http://localhost:9200/handybookshelf-events/_search" \
 
 ```bash
 # アプリケーションのみ再ビルド・再起動
-docker-compose build handybookshelf-app
-docker-compose restart handybookshelf-app
+podman-compose build handybookshelf-app
+podman-compose restart handybookshelf-app
 
 # ローカル開発（SBT使用）
 sbt "project controller" run
 # この場合、データベースサービスのみ起動
-docker-compose up -d scylladb elasticsearch redis
+podman-compose up -d scylladb elasticsearch redis
 ```
 
 ### デバッグ
 
 ```bash
 # アプリケーションコンテナに接続
-docker-compose exec handybookshelf-app /bin/bash
+podman-compose exec handybookshelf-app /bin/bash
 
 # ログリアルタイム監視
-docker-compose logs -f --tail=100
+podman-compose logs -f --tail=100
 
 # 特定サービスのリスタート
-docker-compose restart scylladb
+podman-compose restart scylladb
 ```
 
 ## 設定
@@ -187,9 +187,9 @@ LOG_LEVEL=INFO
 1. **ScyllaDBが起動しない**
    ```bash
    # メモリ不足の場合
-   docker-compose down
-   # docker-compose.ymlでScyllaDBメモリ設定を調整
-   docker-compose up -d scylladb
+   podman-compose down
+   # podman-compose.ymlでScyllaDBメモリ設定を調整
+   podman-compose up -d scylladb
    ```
 
 2. **Elasticsearchが起動しない**
@@ -202,24 +202,24 @@ LOG_LEVEL=INFO
 3. **アプリケーションがデータベースに接続できない**
    ```bash
    # ネットワーク確認
-   docker-compose exec handybookshelf-app ping scylladb
-   docker-compose exec handybookshelf-app ping elasticsearch
+   podman-compose exec handybookshelf-app ping scylladb
+   podman-compose exec handybookshelf-app ping elasticsearch
    
    # 待機スクリプト確認
-   docker-compose logs handybookshelf-app
+   podman-compose logs handybookshelf-app
    ```
 
 ### クリーンアップ
 
 ```bash
 # サービス停止
-docker-compose down
+podman-compose down
 
 # データも含めて完全クリーンアップ
-docker-compose down -v --remove-orphans
+podman-compose down -v --remove-orphans
 
 # イメージも削除
-docker-compose down -v --rmi all
+podman-compose down -v --rmi all
 ```
 
 ## パフォーマンスチューニング

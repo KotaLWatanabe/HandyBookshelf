@@ -1,6 +1,6 @@
 # HandyBookshelf Application Dockerfile
 # Stage 1: Build Stage
-FROM eclipse-temurin:21-jdk-jammy AS build
+FROM ghcr.io/graalvm/graalvm-community:24 AS build
 
 WORKDIR /app
 
@@ -37,7 +37,7 @@ COPY controller/ ./controller/
 RUN sbt -Dsbt.ivy.home=/app/.ivy2 -Dsbt.global.base=/app/.sbt assembly
 
 # Stage 2: Runtime Stage
-FROM eclipse-temurin:21-jre-jammy
+FROM ghcr.io/graalvm/graalvm-community:24
 
 WORKDIR /app
 
@@ -50,7 +50,7 @@ RUN apt-get update && \
 COPY --from=build /app/controller/target/scala-3.7.1/controller-assembly-*.jar app.jar
 
 # Copy wait script for database startup
-COPY docker/wait-for-services.sh ./wait-for-services.sh
+COPY containers/wait-for-services.sh ./wait-for-services.sh
 RUN chmod +x wait-for-services.sh
 
 # Create non-root user

@@ -3,7 +3,7 @@ package controller.api
 package endpoints
 
 import io.circe.generic.semiauto.*
-import io.circe.{Decoder, Encoder}
+import io.circe.{Decoder, Encoder, Codec}
 import sttp.tapir.*
 import sttp.tapir.generic.auto.*
 import sttp.tapir.json.circe.*
@@ -62,3 +62,13 @@ object LoginEndpoints:
       .out(jsonBody[UserStatusResponse])
       .errorOut(stringBody)
       .description("Get user login status")
+
+  final case class Hello(hello: String = "Hello, HandyBookShelf!")
+  given Codec[Hello] = deriveCodec[Hello]
+
+  val helloEndpoint: PublicEndpoint[Unit, String, Hello, Any] =
+    endpointRoot.get
+      .in("hello")
+      .out(jsonBody[Hello])
+      .errorOut(stringBody)
+      .description("Hello endpoint to test the API")

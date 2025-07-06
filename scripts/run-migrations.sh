@@ -23,7 +23,7 @@ echo "🔍 Checking ScyllaDB connection..."
 if ! nc -z $SCYLLA_HOST $SCYLLA_PORT; then
     echo "❌ ScyllaDB is not running on $SCYLLA_HOST:$SCYLLA_PORT"
     echo "   Please start ScyllaDB first:"
-    echo "   docker-compose up -d scylladb"
+    echo "   podman-compose up -d scylladb"
     exit 1
 fi
 
@@ -36,15 +36,15 @@ execute_migration() {
     
     echo "📄 Executing migration: $version"
     
-    # Use docker-compose exec if ScyllaDB is running in Docker
-    if docker-compose ps scylladb | grep -q "Up"; then
-        docker-compose exec -T scylladb cqlsh -u $SCYLLA_USERNAME -p $SCYLLA_PASSWORD -f "/docker-entrypoint-initdb.d/$(basename $file)"
+    # Use podman-compose exec if ScyllaDB is running in Podman
+    if podman-compose ps scylladb | grep -q "Up"; then
+        podman-compose exec -T scylladb cqlsh -u $SCYLLA_USERNAME -p $SCYLLA_PASSWORD -f "/docker-entrypoint-initdb.d/$(basename $file)"
     else
         # Use local cqlsh if available
         if command -v cqlsh &> /dev/null; then
             cqlsh -u $SCYLLA_USERNAME -p $SCYLLA_PASSWORD -f "$file" $SCYLLA_HOST $SCYLLA_PORT
         else
-            echo "❌ cqlsh not found. Please install Cassandra tools or use Docker."
+            echo "❌ cqlsh not found. Please install Cassandra tools or use Podman."
             exit 1
         fi
     fi
@@ -66,13 +66,13 @@ check_migration_dir() {
     fi
 }
 
-# Function to copy migration files to Docker container
-copy_migrations_to_docker() {
-    if docker-compose ps scylladb | grep -q "Up"; then
+# Function to copy migration files to Podman container
+copy_migrations_to_podman() {
+    if podman-compose ps scylladb | grep -q "Up"; then
         echo "📋 Copying migration files to ScyllaDB container..."
         for file in $MIGRATION_DIR/V*.cql; do
             if [ -f "$file" ]; then
-                docker cp "$file" "$(docker-compose ps -q scylladb):/docker-entrypoint-initdb.d/"
+                podman cp "$file" "$(podman-compose ps -q scylladb):/docker-entrypoint-initdb.d/"
             fi
         done
         echo "✅ Migration files copied"
@@ -82,7 +82,7 @@ copy_migrations_to_docker() {
 # Main execution
 main() {
     check_migration_dir
-    copy_migrations_to_docker
+    copy_migrations_to_podman
     
     echo ""
     echo "🚀 Starting database migrations..."
@@ -118,8 +118,8 @@ main() {
     
     # Show final status
     echo "📊 Database Status:"
-    if docker-compose ps scylladb | grep -q "Up"; then
-        docker-compose exec -T scylladb cqlsh -u $SCYLLA_USERNAME -p $SCYLLA_PASSWORD -e "USE $SCYLLA_KEYSPACE; DESCRIBE TABLES;"
+    if podman-compose ps scylladb | grep -q "Up"; then
+        podman-compose exec -T scylladb cqlsh -u $SCYLLA_USERNAME -p $SCYLLA_PASSWORD -e "USE $SCYLLA_KEYSPACE; DESCRIBE TABLES;"
     fi
 }
 

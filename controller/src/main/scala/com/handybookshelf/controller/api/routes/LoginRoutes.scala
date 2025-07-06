@@ -6,48 +6,41 @@ package routes
 import cats.effect.Async
 import cats.syntax.all.*
 import cats.effect.kernel.MonadCancelThrow
-import com.handybookshelf.controller.api.endpoints.LoginEndpoints.{loginEndpoint, logoutEndpoint, statusEndpoint}
+import com.handybookshelf.controller.api.endpoints.LoginEndpoints.*
 import com.handybookshelf.controller.api.endpoints.*
 import com.handybookshelf.domain.UserAccountId
-import com.handybookshelf.infrastructure.{SessionService, LoginResult, LogoutResult, UserStatusResult}
-import com.handybookshelf.util.{IDGenerator, ULIDGen}
-import com.handybookshelf.util.IDGenerator._idgen
+import com.handybookshelf.infrastructure.{LoginResult, LogoutResult, SessionService, UserStatusResult}
+import com.handybookshelf.util.{ULIDGenerator, ULIDGen}
+import com.handybookshelf.util.ULIDGenerator._idgen
 import org.atnos.eff.*
 import org.atnos.eff.interpret.*
 import org.http4s.HttpRoutes
 import sttp.tapir.server.http4s.Http4sServerInterpreter
+import org.atnos.eff.all.*
+import wvlet.airframe.ulid.ULID
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.*
 
 class LoginRoutes[F[_]: Async](sessionService: SessionService):
+  given ec: ExecutionContext = ExecutionContext.global
 
   // Effect stack with ULIDGen
   type EffStack = Fx.fx1[ULIDGen]
 
-  import org.atnos.eff.all.*
-  import wvlet.airframe.ulid.ULID
-
   // ULIDGen effect runner
-  private def runULIDGen[A](effect: Eff[EffStack, A]): A = {
-    interpret.translate(effect)(new Translate[ULIDGen, NoFx] {
-      def apply[X](ulidGen: ULIDGen[X]): Eff[NoFx, X] = 
-        Eff.pure(ulidGen())
-    }).runPure.get
-  }
+  private def runULIDGen[A](effect: Eff[EffStack, A]): A =
+    effect.runPure.get
 
   private def handleLogin(request: LoginRequest): F[Either[String, LoginResponse]] =
     // Parse userAccountId from request - in real implementation this would be validated
-    val userIdGeneration: Eff[EffStack, UserAccountId] = 
-      UserAccountId.generate[EffStack]()
-    
+    val userIdGeneration: Eff[EffStack, UserAccountId] = UserAccountId.generate
+
     val userId = runULIDGen(userIdGeneration)
     
     for {
       // Use the session service directly
-      response <- MonadCancelThrow[F].fromFuture(MonadCancelThrow[F].pure(
-        sessionService.login(userId).unsafeToFuture()
-      ))
+      response <-  sessionService.login(userId).unsafeToFuture()
       
       result = if response.success then
         Right(LoginResponse(
@@ -61,8 +54,7 @@ class LoginRoutes[F[_]: Async](sessionService: SessionService):
 
   private def handleLogout(request: LogoutRequest): F[Either[String, LogoutResponse]] =
     // Parse userAccountId from request - in real implementation this would come from session/token
-    val userIdGeneration: Eff[EffStack, UserAccountId] = 
-      UserAccountId.generate[EffStack]()
+    val userIdGeneration: Eff[EffStack, UserAccountId] = UserAccountId.generate
     
     val userId = runULIDGen(userIdGeneration)
     
@@ -82,8 +74,7 @@ class LoginRoutes[F[_]: Async](sessionService: SessionService):
 
   private def handleStatus(userAccountId: String): F[Either[String, UserStatusResponse]] =
     // Parse userAccountId from string - in real implementation this would be proper parsing
-    val userIdGeneration: Eff[EffStack, UserAccountId] = 
-      UserAccountId.generate[EffStack]()
+    val userIdGeneration: Eff[EffStack, UserAccountId] = UserAccountId.generate
     
     val userId = runULIDGen(userIdGeneration)
     
@@ -102,7 +93,8 @@ class LoginRoutes[F[_]: Async](sessionService: SessionService):
     val interpreter = Http4sServerInterpreter[F]()
     interpreter.toRoutes(loginEndpoint.serverLogic(handleLogin)) <+>
       interpreter.toRoutes(logoutEndpoint.serverLogic(handleLogout)) <+>
-      interpreter.toRoutes(statusEndpoint.serverLogic(handleStatus))
+      interpreter.toRoutes(statusEndpoint.serverLogic(handleStatus)) <+>
+      interpreter.toRoutes(helloEndpoint.serverLogic(handleStatus))
   }
 
 object LoginRoutes:

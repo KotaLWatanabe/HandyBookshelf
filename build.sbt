@@ -34,8 +34,11 @@ lazy val commonSettings = Seq(
     "-feature",       // 言語仕様の変更に関する警告
     "-explain-types", // 型エラー時に詳細な説明を表示
 //    "-Werror", // 警告をエラーとして扱う
-    "-Wunused:all",  // 未使用コードに関する警告
-    "-source:future" // 未来のバージョンの言語仕様を使用
+//    "-Wunused:all",  // 未使用コードに関する警告
+    "-source:future", // 未来のバージョンの言語仕様を使用
+    "cats.effect.tracing.exceptions.enhanced=true",
+    "cats.effect.tracing.mode=full",
+    "cats.effect.tracing.buffer.size=64"
   ),
   scalacOptions --= Seq(
     "-Ykind-projector",
@@ -59,16 +62,43 @@ Test / scalafix := {}
 //    libraryDependencies += "ch.epfl.scala" %% "scalafix-core" % _root_.scalafix.sbt.BuildInfo.scalafixVersion
 //  )
 
+def createTestSettings(
+    _parallelExecution: Boolean = false,
+    _limit: Int = 1,
+    _fork: Boolean = false,
+    _testForkedParallel: Boolean = false,
+    _forkedTestGroup: Int = 1
+) = Seq(
+  Test / fork               := _fork,
+  Test / parallelExecution  := _parallelExecution,
+  Test / testForkedParallel := _testForkedParallel,
+  concurrentRestrictions := Seq(
+    Tags.limitAll(_limit),
+    Tags.limit(Tags.ForkedTestGroup, _forkedTestGroup),
+    Tags.exclusiveGroup(Tags.Clean)
+  )
+)
+
+val testSettings = createTestSettings(
+  _parallelExecution = true,
+  _limit = 4,
+  _fork = true,
+  _testForkedParallel = true,
+  _forkedTestGroup = 2
+)
+
 lazy val util = (project in file("util"))
+  .enablePlugins(NativeImagePlugin)
 //  .dependsOn(scalafix_rules % ScalafixConfig)
   .settings(
-    commonSettings
+    commonSettings,
+    nativeImageVersion := "24.0.0",
+    nativeImageOptions ++= Seq("-H:+AllowIncompleteClasspath", "--no-fallback")
   )
+  .settings(testSettings)
 
 lazy val domain = (project in file("domain"))
-  .settings(
-    commonSettings
-  )
+  .settings(commonSettings)
   .dependsOn(util)
 
 lazy val infrastructure = (project in file("infrastructure"))
@@ -79,15 +109,11 @@ lazy val infrastructure = (project in file("infrastructure"))
   .dependsOn(util, domain)
 
 lazy val adopter = (project in file("adopter"))
-  .settings(
-    commonSettings
-  )
+  .settings(commonSettings)
   .dependsOn(util, domain, infrastructure)
 
 lazy val usecase = (project in file("usecase"))
-  .settings(
-    commonSettings
-  )
+  .settings(commonSettings)
   .dependsOn(util, domain, adopter, infrastructure)
 
 lazy val controller = (project in file("controller"))
