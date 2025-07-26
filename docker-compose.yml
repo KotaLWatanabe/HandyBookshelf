@@ -1,0 +1,132 @@
+version: '3.8'
+
+services:
+  # DynamoDB Local - Event Store for persistence
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    container_name: handybookshelf-dynamodb-local
+    ports:
+      - "8000:8000"
+    volumes:
+      - dynamodb_data:/home/dynamodblocal/data
+    command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-dbPath", "/home/dynamodblocal/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - handybookshelf-network
+
+  # Elasticsearch - Query side for CQRS
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: handybookshelf-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - bootstrap.memory_lock=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"  # HTTP API
+      - "9300:9300"  # Transport
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+      - ./containers/elasticsearch/init.json:/usr/share/elasticsearch/config/init.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=30s"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - handybookshelf-network
+
+  # Kibana - Elasticsearch visualization (optional)
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: handybookshelf-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - xpack.security.enabled=false
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    networks:
+      - handybookshelf-network
+
+  # HandyBookshelf Application (Commented out - run locally with sbt)
+  # handybookshelf-app:
+  #   build:
+  #     context: .
+  #     dockerfile: containers/Dockerfile
+  #   container_name: handybookshelf-app
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     # Database configuration
+  #     - DYNAMODB_ENDPOINT=http://dynamodb-local:8000
+  #     - DYNAMODB_REGION=ap-northeast-1
+  #     - DYNAMODB_ACCESS_KEY_ID=dummy
+  #     - DYNAMODB_SECRET_ACCESS_KEY=dummy
+  #     # Elasticsearch configuration
+  #     - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+  #     - ELASTICSEARCH_INDEX_PREFIX=handybookshelf
+  #     # Application configuration
+  #     - HTTP_HOST=0.0.0.0
+  #     - HTTP_PORT=8080
+  #     - LOG_LEVEL=INFO
+  #   depends_on:
+  #     dynamodb-local:
+  #       condition: service_healthy
+  #     elasticsearch:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "curl -f http://localhost:8080/health"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 120s
+  #   restart: unless-stopped
+  #   networks:
+  #     - handybookshelf-network
+
+  # Redis - Optional caching layer
+  redis:
+    image: redis:7-alpine
+    container_name: handybookshelf-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - handybookshelf-network
+
+
+volumes:
+  dynamodb_data:
+  elasticsearch_data:
+  redis_data:
+
+networks:
+  handybookshelf-network:
+    driver: bridge

@@ -1,0 +1,257 @@
+openapi: 3.0.3
+info:
+  title: HandyBookshelf API
+  description: API for managing digital bookshelf with event sourcing architecture
+  version: 1.0.0
+  contact:
+    name: HandyBookshelf Team
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+
+paths:
+  /api/v1/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login user
+      description: Login a user and create/activate UserAccountActor
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Logout user
+      description: Logout a user and deactivate UserAccountActor
+      operationId: logoutUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/status/{userAccountId}:
+    get:
+      tags:
+        - Authentication
+      summary: Get user login status
+      description: Check if a user is currently logged in
+      operationId: getUserStatus
+      parameters:
+        - name: userAccountId
+          in: path
+          required: true
+          description: User account identifier (ULID format)
+          schema:
+            type: string
+            pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+            example: "01HKDP7VWXYZ123456789ABCDE"
+      responses:
+        '200':
+          description: User status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserStatusResponse'
+        '400':
+          description: Invalid user account ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /joke:
+    get:
+      tags:
+        - Utility
+      summary: Get a random joke
+      description: Returns a random joke (example endpoint)
+      operationId: getJoke
+      responses:
+        '200':
+          description: Joke retrieved successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Why don't scientists trust atoms? Because they make up everything!"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - userAccountId
+      properties:
+        userAccountId:
+          type: string
+          description: User account identifier (ULID format)
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+          example: "01HKDP7VWXYZ123456789ABCDE"
+      example:
+        userAccountId: "01HKDP7VWXYZ123456789ABCDE"
+
+    LoginResponse:
+      type: object
+      required:
+        - success
+        - message
+        - userAccountId
+      properties:
+        success:
+          type: boolean
+          description: Whether the login was successful
+          example: true
+        message:
+          type: string
+          description: Human-readable message about the login result
+          example: "Login successful"
+        userAccountId:
+          type: string
+          description: User account identifier (ULID format)
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+          example: "01HKDP7VWXYZ123456789ABCDE"
+      example:
+        success: true
+        message: "Login successful"
+        userAccountId: "01HKDP7VWXYZ123456789ABCDE"
+
+    LogoutRequest:
+      type: object
+      required:
+        - userAccountId
+      properties:
+        userAccountId:
+          type: string
+          description: User account identifier (ULID format)
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+          example: "01HKDP7VWXYZ123456789ABCDE"
+      example:
+        userAccountId: "01HKDP7VWXYZ123456789ABCDE"
+
+    LogoutResponse:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          description: Whether the logout was successful
+          example: true
+        message:
+          type: string
+          description: Human-readable message about the logout result
+          example: "Logout successful"
+      example:
+        success: true
+        message: "Logout successful"
+
+    UserStatusResponse:
+      type: object
+      required:
+        - userAccountId
+        - isLoggedIn
+      properties:
+        userAccountId:
+          type: string
+          description: User account identifier (ULID format)
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+          example: "01HKDP7VWXYZ123456789ABCDE"
+        isLoggedIn:
+          type: boolean
+          description: Whether the user is currently logged in
+          example: true
+      example:
+        userAccountId: "01HKDP7VWXYZ123456789ABCDE"
+        isLoggedIn: true
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message describing what went wrong
+          example: "Invalid user account ID format"
+        details:
+          type: string
+          description: Additional details about the error (optional)
+          example: "User account ID must be a valid ULID (26 characters)"
+      example:
+        error: "Invalid user account ID format"
+        details: "User account ID must be a valid ULID (26 characters)"
+
+tags:
+  - name: Authentication
+    description: User authentication operations
+  - name: Utility
+    description: Utility endpoints for testing and development
