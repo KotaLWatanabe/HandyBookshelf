@@ -1,25 +1,20 @@
 version: '3.8'
 
 services:
-  # ScyllaDB - Event Store for persistence
-  scylladb:
-    image: scylladb/scylla:5.4
-    container_name: handybookshelf-scylladb
-    command: --seeds=scylladb --smp=1 --memory=750M --overprovisioned=1 --api-address=0.0.0.0
+  # DynamoDB Local - Event Store for persistence
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    container_name: handybookshelf-dynamodb-local
     ports:
-      - "9042:9042"  # CQL port
-      - "10000:10000"  # REST API port
+      - "8000:8000"
     volumes:
-      - scylla_data:/var/lib/scylla
-      - ./project/flyway:/docker-entrypoint-initdb.d:ro
-    environment:
-      - SCYLLA_CLUSTER_NAME=HandyBookshelfCluster
+      - dynamodb_data:/home/dynamodblocal/data
+    command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-dbPath", "/home/dynamodblocal/data"]
     healthcheck:
-      test: ["CMD-SHELL", "cqlsh -u cassandra -p cassandra -e 'describe keyspaces'"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/"]
       interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
+      timeout: 5s
+      retries: 3
     networks:
       - handybookshelf-network
 
@@ -83,10 +78,10 @@ services:
   #     - "8080:8080"
   #   environment:
   #     # Database configuration
-  #     - SCYLLA_HOSTS=scylladb:9042
-  #     - SCYLLA_KEYSPACE=handybookshelf
-  #     - SCYLLA_USERNAME=cassandra
-  #     - SCYLLA_PASSWORD=cassandra
+  #     - DYNAMODB_ENDPOINT=http://dynamodb-local:8000
+  #     - DYNAMODB_REGION=ap-northeast-1
+  #     - DYNAMODB_ACCESS_KEY_ID=dummy
+  #     - DYNAMODB_SECRET_ACCESS_KEY=dummy
   #     # Elasticsearch configuration
   #     - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
   #     - ELASTICSEARCH_INDEX_PREFIX=handybookshelf
@@ -95,7 +90,7 @@ services:
   #     - HTTP_PORT=8080
   #     - LOG_LEVEL=INFO
   #   depends_on:
-  #     scylladb:
+  #     dynamodb-local:
   #       condition: service_healthy
   #     elasticsearch:
   #       condition: service_healthy
@@ -126,28 +121,11 @@ services:
     networks:
       - handybookshelf-network
 
-  # DynamoDB Local - For local development
-  dynamodb-local:
-    image: amazon/dynamodb-local:latest
-    container_name: handybookshelf-dynamodb-local
-    ports:
-      - "8000:8000"
-    volumes:
-      - dynamodb_data:/home/dynamodblocal/data
-    command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-dbPath", "/home/dynamodblocal/data"]
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-    networks:
-      - handybookshelf-network
 
 volumes:
-  scylla_data:
+  dynamodb_data:
   elasticsearch_data:
   redis_data:
-  dynamodb_data:
 
 networks:
   handybookshelf-network:

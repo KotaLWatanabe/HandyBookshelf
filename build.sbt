@@ -104,7 +104,7 @@ lazy val domain = (project in file("domain"))
 lazy val infrastructure = (project in file("infrastructure"))
   .settings(
     commonSettings,
-    libraryDependencies ++= Libraries.cassandra ++ Libraries.dynamodb
+    libraryDependencies ++= Libraries.dynamodb ++ Libraries.cassandra
   )
   .dependsOn(util, domain)
 
