@@ -439,7 +439,52 @@ GET /api/books?publisher=オライリー・ジャパン
 
 ---
 
-## 16. 未実装課題
+## 16. イベントストーミング: 電子書籍ディープリンク（2026-02-01）
+
+### ビジネスルール
+| ルール | 決定 |
+|--------|------|
+| 複数リンク | 1冊の本に複数プラットフォームのリンクを保存可能 |
+| 登録方法 | 手動入力（将来的に自動生成を検討） |
+
+### 型定義
+```scala
+enum EbookPlatformType:
+  case Kindle, Kobo, GooglePlayBooks, AppleBooks, Other(name: NES)
+
+sealed trait EbookDeepLink:
+  def url: String
+  def platformType: EbookPlatformType
+
+// BookAggregateに追加
+ebookLinks: Set[EbookDeepLink]
+```
+
+### プラットフォーム別リンク形式
+| プラットフォーム | リンク形式 |
+|-----------------|-----------|
+| Kindle | `kindle://book?action=open&asin=XXX` |
+| Google Play Books | `https://play.google.com/store/books/details?id=XXX` |
+| Kobo | `https://www.kobo.com/ebook/XXX` |
+| Apple Books | `itms-books://apple.co/book/idXXX` |
+
+### コマンド（3個、新規）
+`AddEbookDeepLink`, `UpdateEbookDeepLink`, `RemoveEbookDeepLink`
+
+### ドメインイベント（3個、新規）
+`EbookDeepLinkAdded`, `EbookDeepLinkUpdated`, `EbookDeepLinkRemoved`
+
+### 新規API
+```
+POST   /api/books/{bookId}/ebook-links
+GET    /api/books/{bookId}/ebook-links
+PUT    /api/books/{bookId}/ebook-links/{platform}
+DELETE /api/books/{bookId}/ebook-links/{platform}
+```
+
+---
+
+## 17. 未実装課題
 
 - [ ] BookshelfActor実装
 - [ ] BookshelfState（デュアルインデックス）
@@ -466,3 +511,6 @@ GET /api/books?publisher=オライリー・ジャパン
 - [ ] NormalizedAuthor/NormalizedPublisher型実装
 - [ ] authorIndex/publisherIndex実装
 - [ ] 著者・出版社フィルタAPI実装
+- [ ] EbookDeepLink型実装
+- [ ] ASIN, GoogleBooksId等の型実装
+- [ ] 電子書籍ディープリンクAPI実装
