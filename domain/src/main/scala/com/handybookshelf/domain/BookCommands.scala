@@ -2,7 +2,6 @@ package com.handybookshelf
 package domain
 
 import cats.effect.IO
-import com.handybookshelf.util.ISBN
 // Temporarily commented out for compilation
 // import com.handybookshelf.infrastructure.{EventStore, StreamId}
 
@@ -11,7 +10,7 @@ sealed trait BookCommand:
 
 final case class RegisterBook(
     bookId: BookId,
-    isbn: Option[ISBN],
+    identifier: BookIdentifier,
     title: NES
 ) extends BookCommand
 
@@ -70,8 +69,8 @@ class BookCommandHandlerImpl(
 
   private def handleCommand(command: BookCommand, aggregate: BookAggregate): IO[BookAggregate] =
     command match
-      case RegisterBook(_, isbn, title) =>
-        aggregate.register(isbn, title)
+      case RegisterBook(_, identifier, title) =>
+        aggregate.register(identifier, title)
 
       case ChangeBookLocation(_, location) =>
         aggregate.changeLocation(location)

@@ -7,6 +7,8 @@ import java.nio.charset.StandardCharsets
 import ISBN.*
 
 object ULIDConverter:
+  private val random = new java.security.SecureRandom()
+
   def createULIDFromISBN(isbn: ISBN, timestamp: Timestamp): ULID = {
     // ISBNをバイト配列に変換し、10ビットに収まるよう調整
     val isbnBytes  = isbn.getBytes(StandardCharsets.UTF_8).take(10)
@@ -19,13 +21,15 @@ object ULIDConverter:
   def createULID(bookCode: NES, timestamp: Timestamp): ULID =
     bookCode.isbnOpt match {
       case Some(isbn: ISBN) => createULIDFromISBN(isbn, timestamp)
-      case None             =>
-        // ISBNがない場合は完全ランダムな値
-        val randomPart = Array.fill[Byte](10)(0.toByte)
-
-        // ULID生成 (6 bytes timestamp + 10 bytes random = 16 bytes total)
-        ULID.fromBytes(timestamp.toBytes ++ randomPart)
+      case None             => generateULID(timestamp)
     }
+
+  /** 純粋なランダムULIDを生成（サロゲートキー用） */
+  def generateULID(timestamp: Timestamp): ULID = {
+    val randomPart = new Array[Byte](10)
+    random.nextBytes(randomPart)
+    ULID.fromBytes(timestamp.toBytes ++ randomPart)
+  }
 
   extension (timestamp: Timestamp) {
     def toBytes: Array[Byte] = {

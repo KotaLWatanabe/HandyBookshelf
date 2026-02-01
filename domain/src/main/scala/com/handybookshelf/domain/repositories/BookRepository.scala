@@ -21,6 +21,33 @@ trait BookRepository extends AggregateRepository[BookAggregate, BookEvent]:
     findById(bookId.toString)
 
   /**
+   * 指定された識別子を持つ書籍が存在するかチェックする
+   * @param identifier
+   *   書籍識別子
+   * @return
+   *   存在する場合はtrue
+   */
+  def existsByIdentifier(identifier: BookIdentifier): IO[Boolean]
+
+  /**
+   * 識別子から書籍集約を検索する
+   * @param identifier
+   *   書籍識別子
+   * @return
+   *   該当する書籍集約（存在しない場合はNone）
+   */
+  def findByIdentifier(identifier: BookIdentifier): IO[Option[BookAggregate]]
+
+  /**
+   * 正規化された識別子から書籍集約を検索する
+   * @param normalizedId
+   *   正規化された識別子
+   * @return
+   *   該当する書籍集約（存在しない場合はNone）
+   */
+  def findByNormalizedIdentifier(normalizedId: NormalizedIdentifier): IO[Option[BookAggregate]]
+
+  /**
    * ISBNから書籍集約を検索する
    * @param isbn
    *   ISBN

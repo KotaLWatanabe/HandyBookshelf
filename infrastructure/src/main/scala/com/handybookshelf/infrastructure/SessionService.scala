@@ -21,7 +21,7 @@ final case class UserSession(
     lastActivity: Timestamp,
     expirationTime: Timestamp
 ):
-  def isValid: IO[Boolean]   = expirationTime.isAfterNow
+  def isValid: IO[Boolean]   = IO(Timestamp.now).map(now => expirationTime.isAfter(now))
   def isExpired: IO[Boolean] = isValid.map(!_)
 
 // Session events for event sourcing
@@ -143,7 +143,7 @@ class CatsEffectSessionService(
       result <- sessionIsValidOpt match
         case Some((session, isValid)) if isValid =>
           for {
-            now <- Timestamp.now
+            now <- IO(Timestamp.now)
             logoutEvent = UserLoggedOut(userAccountId, session.sessionId, now)
             _ <- persistEvent(userAccountId, logoutEvent)
             _ <- sessionStore.update(_.removed(session.sessionId))
@@ -186,7 +186,7 @@ class CatsEffectSessionService(
       result <- sessionIsValidOpt match
         case Some((session, isValid)) if isValid =>
           for {
-            now <- Timestamp.now
+            now <- IO(Timestamp.now)
             newExpiration = now.plusHours(SessionConfig.EXTENSION_DURATION_HOURS)
             extendEvent   = SessionExtended(sessionId, newExpiration)
             _ <- persistEvent(session.userAccountId, extendEvent)
@@ -224,7 +224,7 @@ class CatsEffectSessionService(
   def cleanupExpiredSessions: IO[Unit] =
     for {
       currentSessions <- sessionStore.get
-      now             <- Timestamp.now
+      now             <- IO(Timestamp.now)
       expiredSessions <- currentSessions.values.toList.traverse(session => session.isExpired.map((session, _)))
       _ <- expiredSessions.traverse { case (session, _) =>
         for {
@@ -238,7 +238,7 @@ class CatsEffectSessionService(
   private def createNewSession(userAccountId: UserAccountId): IO[LoginResult] =
     for {
       sessionId <- IO(SessionId(UUID.randomUUID().toString))
-      now       <- Timestamp.now
+      now       <- IO(Timestamp.now)
       expirationTime = now.plusHours(SessionConfig.SESSION_DURATION_HOURS)
       loginEvent     = UserLoggedIn(userAccountId, sessionId, now)
       _ <- persistEvent(userAccountId, loginEvent)
@@ -259,7 +259,7 @@ class CatsEffectSessionService(
   private def persistEvent(userAccountId: UserAccountId, sessionEvent: SessionEvent): IO[Unit] =
     val streamId = StreamId(s"UserSession-${userAccountId.breachEncapsulationIdAsString}")
     for {
-      timestamp <- Timestamp.now
+      timestamp <- IO(Timestamp.now)
       storedEvent = new StoredEvent {
         type E = SessionEvent
         def event: SessionEvent = sessionEvent

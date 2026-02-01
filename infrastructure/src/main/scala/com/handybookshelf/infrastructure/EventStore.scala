@@ -80,7 +80,7 @@ class InMemoryEventStore extends EventStore:
         currentMetadata <- getStreamMetadata(streamId)
         _               <- validateVersion(currentMetadata, expectedVersion)
         newVersion = currentMetadata.map(_.version.next).getOrElse(EventVersion.init)
-        timestamp <- Timestamp.now
+        timestamp <- IO(Timestamp.now)
         newMetadata = StreamMetadata(streamId, newVersion, timestamp)
         _ <- IO {
           store = store.updated(streamId, events ++ store.getOrElse(streamId, List.empty))

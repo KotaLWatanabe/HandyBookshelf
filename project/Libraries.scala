@@ -17,6 +17,7 @@ object Libraries {
   val pekkoVersion           = "1.1.4"
   val cassandraDriverVersion = "4.17.0"
   val awsVersion             = "2.29.40"
+  val fs2Version             = "3.11.0"
 
   // Libraries
   lazy val cats       = "org.typelevel" %% "cats-core"   % catsVersion
@@ -79,6 +80,11 @@ object Libraries {
     "software.amazon.awssdk" % "url-connection-client" % awsVersion
   )
 
+  lazy val fs2: Seq[ModuleID] = Seq(
+    "co.fs2" %% "fs2-core" % fs2Version,
+    "co.fs2" %% "fs2-io"   % fs2Version
+  )
+
   // Projects
   val common: Seq[ModuleID] =
     Seq(
@@ -93,6 +99,6 @@ object Libraries {
       xml,
       slf4j,
       atnosEff
-    ) ++ http4s ++ tapir ++ sttp ++ pekko
+    ) ++ http4s ++ tapir ++ sttp ++ pekko ++ fs2
   val chapter1: Seq[ModuleID] = Seq(catsEffect)
 }

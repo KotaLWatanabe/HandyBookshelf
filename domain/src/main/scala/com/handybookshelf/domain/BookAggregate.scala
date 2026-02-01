@@ -7,7 +7,7 @@ import com.handybookshelf.util.{ISBN, Timestamp}
 final case class BookAggregate(
     bookId: BookId,
     title: Option[NES] = None,
-    isbn: Option[ISBN] = None,
+    identifier: Option[BookIdentifier] = None,
     location: Option[Location] = None,
     tags: Set[Tag] = Set.empty,
     devices: Set[Device] = Set.empty,
@@ -18,11 +18,18 @@ final case class BookAggregate(
 
   override def id: String = bookId.toString
 
+  /** 後方互換性: ISBNを取得（ISBN識別子の場合のみ） */
+  def isbn: Option[ISBN] = identifier.collect { case BookIdentifier.ISBN(isbn) => isbn }
+
+  /** 正規化された識別子キーを取得（重複チェック用） */
+  def normalizedIdentifier: Option[NormalizedIdentifier] =
+    identifier.map(_.normalizedKey)
+
   protected def applyEvent(event: BookEvent): BookAggregate = event match
-    case BookRegistered(_, _, isbn, title, version, _) =>
+    case BookRegistered(_, _, identifier, title, version, _) =>
       this.copy(
         title = Some(title),
-        isbn = isbn,
+        identifier = Some(identifier),
         version = version,
         uncommittedEvents = event :: uncommittedEvents
       )
@@ -80,12 +87,19 @@ final case class BookAggregate(
     this.copy(uncommittedEvents = List.empty)
 
   // ビジネスロジック - コマンドハンドリング
-  def register(isbn: Option[ISBN], title: NES): IO[BookAggregate] =
-    Timestamp.now.map(timestamp =>
+
+  /** 書籍を登録する（BookIdentifier版）
+    *
+    * @param identifier 識別子（ISBN, arXiv ID, DOI, またはタイトル）
+    * @param title 書籍タイトル
+    * @return 更新されたBookAggregate
+    */
+  def register(identifier: BookIdentifier, title: NES): IO[BookAggregate] =
+    IO(Timestamp.now).map(timestamp =>
       val event = BookRegistered(
         eventId = EventId.generate(),
         bookId = bookId,
-        isbn = isbn,
+        identifier = identifier,
         title = title,
         version = version.next,
         timestamp = timestamp
@@ -93,10 +107,22 @@ final case class BookAggregate(
       applyEvent(event)
     )
 
+  /** 書籍を登録する（後方互換性: ISBN版）
+    *
+    * @param isbn ISBN（オプション）
+    * @param title 書籍タイトル
+    * @return 更新されたBookAggregate
+    */
+  def registerWithISBN(isbn: Option[ISBN], title: NES): IO[BookAggregate] =
+    val identifier = isbn match
+      case Some(i) => BookIdentifier.ISBN(i)
+      case None    => BookIdentifier.Title(title)
+    register(identifier, title)
+
   def changeLocation(newLocation: Location): IO[BookAggregate] =
     if (isDeleted) IO.raiseError(new IllegalStateException("Cannot change location of deleted book"))
     else
-      Timestamp.now.map(timestamp =>
+      IO(Timestamp.now).map(timestamp =>
         val event = BookLocationChanged(
           eventId = EventId.generate(),
           bookId = bookId,
@@ -112,7 +138,7 @@ final case class BookAggregate(
     if (isDeleted) IO.raiseError(new IllegalStateException("Cannot add tag to deleted book"))
     else if (tags.contains(tag)) IO.pure(this)
     else
-      Timestamp.now.map(timestamp =>
+      IO(Timestamp.now).map(timestamp =>
         val event = BookTagAdded(
           eventId = EventId.generate(),
           bookId = bookId,
@@ -127,7 +153,7 @@ final case class BookAggregate(
     if (isDeleted) IO.raiseError(new IllegalStateException("Cannot remove tag from deleted book"))
     else if (!tags.contains(tag)) IO.pure(this)
     else
-      Timestamp.now.map(timestamp =>
+      IO(Timestamp.now).map(timestamp =>
         val event = BookTagRemoved(
           eventId = EventId.generate(),
           bookId = bookId,
@@ -142,7 +168,7 @@ final case class BookAggregate(
     if (isDeleted) IO.raiseError(new IllegalStateException("Cannot add device to deleted book"))
     else if (devices.contains(device)) IO.pure(this)
     else
-      Timestamp.now.map(timestamp =>
+      IO(Timestamp.now).map(timestamp =>
         val event = BookDeviceAdded(
           eventId = EventId.generate(),
           bookId = bookId,
@@ -157,7 +183,7 @@ final case class BookAggregate(
     if (isDeleted) IO.raiseError(new IllegalStateException("Cannot remove device from deleted book"))
     else if (!devices.contains(device)) IO.pure(this)
     else
-      Timestamp.now.map(timestamp =>
+      IO(Timestamp.now).map(timestamp =>
         val event = BookDeviceRemoved(
           eventId = EventId.generate(),
           bookId = bookId,
@@ -175,7 +201,7 @@ final case class BookAggregate(
       title match
         case Some(oldTitle) if oldTitle == newTitle => IO.pure(this)
         case Some(oldTitle) =>
-          Timestamp.now.map(timestamp =>
+          IO(Timestamp.now).map(timestamp =>
             val event = BookTitleUpdated(
               eventId = EventId.generate(),
               bookId = bookId,
@@ -192,7 +218,7 @@ final case class BookAggregate(
   def remove(): IO[BookAggregate] =
     if (isDeleted) IO.pure(this)
     else
-      Timestamp.now.map(timestamp =>
+      IO(Timestamp.now).map(timestamp =>
         val event = BookRemoved(
           eventId = EventId.generate(),
           bookId = bookId,

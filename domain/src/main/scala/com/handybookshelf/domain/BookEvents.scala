@@ -3,9 +3,6 @@ package domain
 
 import com.handybookshelf.util.{ISBN, Timestamp}
 
-// Temporarily commented out for compilation
-// import com.handybookshelf.infrastructure.EventVersion
-
 sealed trait BookEvent extends DomainEvent:
   def bookId: BookId
   def bookEventType: BookEventType
@@ -22,15 +19,29 @@ enum BookEventType(val eventType: String):
   case TitleUpdated    extends BookEventType("BookTitleUpdated")
   case Removed         extends BookEventType("BookRemoved")
 
+/** 書籍登録イベント
+  *
+  * @param eventId イベントID
+  * @param bookId 書籍ID
+  * @param identifier 書籍識別子（ISBN, arXiv ID, DOI, またはタイトル）
+  * @param title 書籍タイトル
+  * @param version イベントバージョン
+  * @param timestamp タイムスタンプ
+  */
 final case class BookRegistered(
     eventId: EventId,
     bookId: BookId,
-    isbn: Option[ISBN],
+    identifier: BookIdentifier,
     title: NES,
     version: EventVersion,
     timestamp: Timestamp
 ) extends BookEvent:
   val bookEventType: BookEventType = BookEventType.Registered
+
+  /** 後方互換性: ISBNを取得（ISBN識別子の場合のみ） */
+  def isbn: Option[ISBN] = identifier match
+    case BookIdentifier.ISBN(isbn) => Some(isbn)
+    case _                         => None
 
 final case class BookLocationChanged(
     eventId: EventId,

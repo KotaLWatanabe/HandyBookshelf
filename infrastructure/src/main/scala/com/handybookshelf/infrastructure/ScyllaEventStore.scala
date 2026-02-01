@@ -105,7 +105,7 @@ class ScyllaEventStore(session: CqlSession)(using Encoder[DomainEvent], Codec[St
   override def getStreamMetadata(streamId: StreamId): IO[Option[StreamMetadata]] =
     for {
       latestSeq <- getLatestSequenceNumber(streamId)
-      timestamp <- Timestamp.now
+      timestamp <- IO(Timestamp.now)
     } yield latestSeq.map(seq => StreamMetadata(streamId, EventVersion(seq), timestamp))
 
   override def streamExists(streamId: StreamId): IO[Boolean] =

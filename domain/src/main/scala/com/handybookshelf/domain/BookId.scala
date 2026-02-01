@@ -22,6 +22,10 @@ object BookId:
   ): BookId =
     BookId(ULIDConverter.createULIDFromISBN(isbn, timestamp))
 
+  /** ランダムなBookIdを生成（サロゲートキー用） */
+  def generate(timestamp: Timestamp): BookId =
+    BookId(ULIDConverter.generateULID(timestamp))
+
   // Circe codecs for BookId
   given Encoder[BookId]    = Encoder.encodeString.contramap(_.toString)
   given Decoder[BookId]    = Decoder.decodeString.map(str => BookId(ULID.fromString(str)))

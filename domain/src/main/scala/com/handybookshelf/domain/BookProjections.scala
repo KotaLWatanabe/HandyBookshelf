@@ -2,13 +2,13 @@ package com.handybookshelf
 package domain
 
 import cats.effect.IO
-import com.handybookshelf.util.{ISBN, Timestamp}
+import com.handybookshelf.util.Timestamp
 
 // Query側のビューモデル
 final case class BookView(
     id: BookId,
     title: NES,
-    isbn: Option[ISBN],
+    identifier: Option[BookIdentifier],
     location: Option[Location],
     tags: Set[Tag],
     devices: Set[Device],
@@ -65,11 +65,11 @@ class BookViewProjection extends Projection[BookView]:
     }
 
   private def createViewFromEvent(event: BookEvent): BookView = event match
-    case BookRegistered(_, bookId, isbn, title, _, timestamp) =>
+    case BookRegistered(_, bookId, identifier, title, _, timestamp) =>
       BookView(
         id = bookId,
         title = title,
-        isbn = isbn,
+        identifier = Some(identifier),
         location = None,
         tags = Set.empty,
         devices = Set.empty,
