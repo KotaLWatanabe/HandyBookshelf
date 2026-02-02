@@ -5,14 +5,13 @@ import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import cats.syntax.all.*
 
-sealed trait BookSorter:
-  def compare: (BookReference, BookReference) => Int
-  def sortAsc: (BookReference, BookReference) => Boolean = compare(_, _) < 0
+enum BookSorter:
+  case TitleSorter
 
-// Concrete sorter implementations
-case object TitleSorter extends BookSorter:
-  def compare: (BookReference, BookReference) => Int =
-    (a, b) => a.book.titleCompare(b.book)
+  def compare: (BookReference, BookReference) => Int = this match
+    case TitleSorter => (a, b) => a.book.titleCompare(b.book)
+
+  def sortAsc: (BookReference, BookReference) => Boolean = compare(_, _) < 0
 
 sealed trait Filter:
   def predicate: BookReference => Boolean

@@ -15,12 +15,8 @@ final case class BulkBookRegistrationRequest(
     maxConcurrency: Option[Int] = None
 )
 
-sealed trait BulkRegistrationStatus
-object BulkRegistrationStatus:
-  case object Started extends BulkRegistrationStatus
-  case object InProgress extends BulkRegistrationStatus
-  case object Completed extends BulkRegistrationStatus
-  case object Failed extends BulkRegistrationStatus
+enum BulkRegistrationStatus:
+  case Started, InProgress, Completed, Failed
 
 final case class BookRegistrationProgress(
     bookIndex: Int,

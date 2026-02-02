@@ -4,55 +4,48 @@ package adopter.actors
 import org.apache.pekko.actor.typed.{ActorRef, Behavior}
 import org.apache.pekko.persistence.typed.PersistenceId
 import org.apache.pekko.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, ReplyEffect}
-import domain.{UserAccountId, Bookshelf, BookId, BookReference, Filters, BookSorter, TitleSorter}
+import domain.{UserAccountId, Bookshelf, BookId, BookReference, Filters, BookSorter}
 import io.circe.{Decoder, Encoder}
-import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 object BookshelfActor:
+  import BookshelfCommand.*
 
   // Commands
-  sealed trait BookshelfCommand
-
-  final case class AddBookToShelf(
-      bookId: BookId,
-      bookReference: BookReference,
-      filters: Filters,
-      sessionId: String,
-      replyTo: ActorRef[BookOperationResponse]
-  ) extends BookshelfCommand
-
-  final case class RemoveBookFromShelf(
-      bookId: BookId,
-      sessionId: String,
-      replyTo: ActorRef[BookOperationResponse]
-  ) extends BookshelfCommand
-
-  final case class GetBookshelf(
-      sessionId: String,
-      replyTo: ActorRef[BookshelfResponse]
-  ) extends BookshelfCommand
-
-  final case class ChangeSorter(
-      newSorter: BookSorter,
-      sessionId: String,
-      replyTo: ActorRef[BookOperationResponse]
-  ) extends BookshelfCommand
-
-  final case class AddFilterToBook(
-      bookId: BookId,
-      filter: domain.Filter,
-      sessionId: String,
-      replyTo: ActorRef[BookOperationResponse]
-  ) extends BookshelfCommand
-
-  final case class RemoveFilterFromBook(
-      bookId: BookId,
-      filter: domain.Filter,
-      sessionId: String,
-      replyTo: ActorRef[BookOperationResponse]
-  ) extends BookshelfCommand
-
-  case object Shutdown extends BookshelfCommand
+  enum BookshelfCommand:
+    case AddBookToShelf(
+        bookId: BookId,
+        bookReference: BookReference,
+        filters: Filters,
+        sessionId: String,
+        replyTo: ActorRef[BookOperationResponse]
+    )
+    case RemoveBookFromShelf(
+        bookId: BookId,
+        sessionId: String,
+        replyTo: ActorRef[BookOperationResponse]
+    )
+    case GetBookshelf(
+        sessionId: String,
+        replyTo: ActorRef[BookshelfResponse]
+    )
+    case ChangeSorter(
+        newSorter: BookSorter,
+        sessionId: String,
+        replyTo: ActorRef[BookOperationResponse]
+    )
+    case AddFilterToBook(
+        bookId: BookId,
+        filter: domain.Filter,
+        sessionId: String,
+        replyTo: ActorRef[BookOperationResponse]
+    )
+    case RemoveFilterFromBook(
+        bookId: BookId,
+        filter: domain.Filter,
+        sessionId: String,
+        replyTo: ActorRef[BookOperationResponse]
+    )
+    case Shutdown
 
   // Events
   sealed trait BookshelfEvent
@@ -100,7 +93,7 @@ object BookshelfActor:
   // State
   final case class BookshelfState(
       userAccountId: UserAccountId,
-      bookshelf: Bookshelf = Bookshelf(Map.empty, TitleSorter)
+      bookshelf: Bookshelf = Bookshelf(Map.empty, BookSorter.TitleSorter)
   )
 
   // Session validation interface

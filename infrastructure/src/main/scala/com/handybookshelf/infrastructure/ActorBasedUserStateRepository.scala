@@ -21,9 +21,9 @@ class ActorBasedUserStateRepository(
     }
     
     IO.fromFuture(IO.pure(askResult)).flatMap {
-      case UserStateActor.CommandSuccess => 
+      case UserStateActor.CommandResult.CommandSuccess =>
         IO.unit
-      case UserStateActor.CommandFailure(error) => 
+      case UserStateActor.CommandResult.CommandFailure(error) =>
         IO.raiseError(new RuntimeException(s"Command failed: $error"))
     }
   }

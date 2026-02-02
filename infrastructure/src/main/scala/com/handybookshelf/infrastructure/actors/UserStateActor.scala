@@ -37,9 +37,11 @@ object UserStateActor:
   ) extends UserStateMessage
   
   // Response types
-  sealed trait CommandResult
-  case object CommandSuccess extends CommandResult
-  final case class CommandFailure(error: String) extends CommandResult
+  enum CommandResult:
+    case CommandSuccess
+    case CommandFailure(error: String)
+
+  import CommandResult.*
 
   def apply(): Behavior[UserStateMessage] =
     Behaviors.setup { context =>

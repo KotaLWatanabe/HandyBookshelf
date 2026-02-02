@@ -5,11 +5,12 @@ import cats.effect.{IO, Ref, Temporal}
 import cats.syntax.all.*
 import scala.concurrent.duration.*
 
+import CircuitBreakerState.*
+import CircuitBreakerError.*
+
 // Circuit breaker states
-sealed trait CircuitBreakerState
-case object Closed extends CircuitBreakerState
-case object Open extends CircuitBreakerState  
-case object HalfOpen extends CircuitBreakerState
+enum CircuitBreakerState:
+  case Closed, Open, HalfOpen
 
 // Circuit breaker configuration
 final case class CircuitBreakerConfig(
@@ -30,13 +31,11 @@ final case class CircuitBreakerStats(
 )
 
 // Circuit breaker errors
-sealed trait CircuitBreakerError extends Exception
-case object CircuitBreakerOpenError extends CircuitBreakerError {
-  override def getMessage: String = "Circuit breaker is open - calls not allowed"
-}
-case object CircuitBreakerTimeoutError extends CircuitBreakerError {
-  override def getMessage: String = "Circuit breaker call timeout"
-}
+enum CircuitBreakerError(val message: String) extends Exception:
+  case CircuitBreakerOpenError extends CircuitBreakerError("Circuit breaker is open - calls not allowed")
+  case CircuitBreakerTimeoutError extends CircuitBreakerError("Circuit breaker call timeout")
+
+  override def getMessage: String = message
 
 // Circuit breaker implementation
 class CircuitBreaker[F[_]: Temporal] private (

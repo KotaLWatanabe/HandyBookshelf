@@ -15,31 +15,26 @@ import scala.concurrent.duration.*
 import scala.util.{Success, Failure}
 
 object SupervisorActor:
-  sealed trait SupervisorCommand
+  // Commands
+  enum SupervisorCommand:
+    // User session management commands
+    case LoginUser(
+      userAccountId: UserAccountId,
+      replyTo: ActorRef[LoginResult]
+    )
+    case LogoutUser(
+      userAccountId: UserAccountId,
+      replyTo: ActorRef[LogoutResult]
+    )
+    case GetUserStatus(
+      userAccountId: UserAccountId,
+      replyTo: ActorRef[UserStatusResult]
+    )
+    // Administrative commands
+    case GetChildren(replyTo: ActorRef[Set[String]])
+    case Shutdown
 
-  // User session management commands
-  final case class LoginUser(
-    userAccountId: UserAccountId,
-    replyTo: ActorRef[LoginResult]
-  ) extends SupervisorCommand
-  
-  final case class LogoutUser(
-    userAccountId: UserAccountId,
-    replyTo: ActorRef[LogoutResult]
-  ) extends SupervisorCommand
-  
-  final case class GetUserStatus(
-    userAccountId: UserAccountId,
-    replyTo: ActorRef[UserStatusResult]
-  ) extends SupervisorCommand
-
-  
-  // Administrative commands
-  final case class GetChildren(replyTo: ActorRef[Set[String]]) extends SupervisorCommand
-  case object Shutdown extends SupervisorCommand
-
-  // Response types
-  sealed trait SupervisorResponse
+  import SupervisorCommand.*
 
   val supervisorServiceKey: ServiceKey[SupervisorCommand] = ServiceKey("supervisor")
 

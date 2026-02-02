@@ -10,32 +10,11 @@ import io.circe.generic.auto.*
 import io.circe.syntax.*
 
 // Authentication error types
-sealed trait AuthError {
-  def message: String
-  def status: Status
-}
-
-object AuthError {
-  case object MissingToken extends AuthError {
-    val message = "Authorization token is missing"
-    val status = Status.Unauthorized
-  }
-  
-  case object InvalidToken extends AuthError {
-    val message = "Authorization token is invalid"
-    val status = Status.Unauthorized
-  }
-  
-  case object ExpiredToken extends AuthError {
-    val message = "Authorization token has expired"
-    val status = Status.Unauthorized
-  }
-  
-  case object InsufficientPermissions extends AuthError {
-    val message = "Insufficient permissions for this resource"
-    val status = Status.Forbidden
-  }
-}
+enum AuthError(val message: String, val status: Status):
+  case MissingToken extends AuthError("Authorization token is missing", Status.Unauthorized)
+  case InvalidToken extends AuthError("Authorization token is invalid", Status.Unauthorized)
+  case ExpiredToken extends AuthError("Authorization token has expired", Status.Unauthorized)
+  case InsufficientPermissions extends AuthError("Insufficient permissions for this resource", Status.Forbidden)
 
 // User context from authentication
 final case class AuthenticatedUser(
@@ -45,9 +24,9 @@ final case class AuthenticatedUser(
 )
 
 // Authentication result
-sealed trait AuthResult
-case object Unauthenticated extends AuthResult
-final case class Authenticated(user: AuthenticatedUser) extends AuthResult
+enum AuthResult:
+  case Unauthenticated
+  case Authenticated(user: AuthenticatedUser)
 
 // Token service for JWT or similar token validation
 trait TokenService[F[_]] {

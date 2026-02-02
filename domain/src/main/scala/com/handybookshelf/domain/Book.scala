@@ -42,27 +42,19 @@ final case class BookReference(book: Book, tags: Seq[Tag], devices: NonEmptyList
   val bookId: BookId = book.id
 }
 
-sealed trait Device
-object Device:
-  case object Paper extends Device
-  case object Pdf   extends Device
-  case object Ebook extends Device
+enum Device:
+  case Paper, Pdf, Ebook
 
+object Device:
   // Eq instance for Device
   given Eq[Device] = Eq.fromUniversalEquals
 
   // Circe codecs for Device
-  given Encoder[Device] = Encoder.instance {
-    case Paper => Json.fromString("Paper")
-    case Pdf   => Json.fromString("Pdf")
-    case Ebook => Json.fromString("Ebook")
-  }
-  given Decoder[Device] = Decoder.decodeString.emap {
-    case "Paper" => Right(Paper)
-    case "Pdf"   => Right(Pdf)
-    case "Ebook" => Right(Ebook)
-    case other   => Left(s"Unknown device type: $other")
-  }
+  given Encoder[Device] = Encoder.encodeString.contramap(_.toString)
+  given Decoder[Device] = Decoder.decodeString.emap: s =>
+    scala.util.Try(Device.valueOf(s))
+      .toEither
+      .left.map(_ => s"Unknown device type: $s")
 
 final case class Tag(name: NES)
 
