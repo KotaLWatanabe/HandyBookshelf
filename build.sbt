@@ -101,6 +101,10 @@ lazy val domain = (project in file("domain"))
   .settings(commonSettings)
   .dependsOn(util)
 
+lazy val query = (project in file("query"))
+  .settings(commonSettings)
+  .dependsOn(util, domain)
+
 lazy val infrastructure = (project in file("infrastructure"))
   .settings(
     commonSettings,
@@ -114,11 +118,11 @@ lazy val adopter = (project in file("adopter"))
 
 lazy val usecase = (project in file("usecase"))
   .settings(commonSettings)
-  .dependsOn(util, domain, adopter, infrastructure)
+  .dependsOn(util, domain, query, adopter, infrastructure)
 
 lazy val controller = (project in file("controller"))
   .settings(
     commonSettings,
     libraryDependencies ++= Libraries.pekko
   )
-  .dependsOn(util, domain, infrastructure, adopter, usecase)
+  .dependsOn(util, domain, query, infrastructure, adopter, usecase)

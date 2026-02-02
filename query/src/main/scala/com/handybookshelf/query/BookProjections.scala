@@ -1,7 +1,8 @@
 package com.handybookshelf
-package domain
+package query
 
 import cats.effect.IO
+import com.handybookshelf.domain.*
 import com.handybookshelf.util.Timestamp
 
 // Query側のビューモデル

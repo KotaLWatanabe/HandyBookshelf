@@ -1,4 +1,4 @@
-package com.handybookshelf.domain
+package com.handybookshelf.query
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
