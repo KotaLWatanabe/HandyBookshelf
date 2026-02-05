@@ -2,7 +2,13 @@ package com.handybookshelf
 package usecase
 
 import cats.effect.IO
-import org.atnos.eff.Fx
+
+type UsecaseEff[A] = EffectStack.UseCaseOperation[A]
+type EffectStack = Fx.fx3[
+  IO,
+  Either[DomainError, *],
+  Either[UseCaseError, *]
+]
 
 object EffectStack {
 
@@ -11,10 +17,8 @@ object EffectStack {
       retryCount: Int
   )
 
-  type EffectStack = Fx.fx3[IO, Either[UseCaseError, *], Writer[String, *]]
-
   // Simplified effect type for compilation
-  type UseCaseOperation[A] = IO[Either[String, A]]
+  type UseCaseOperation[A] = IO[Either[UseCaseError, A]]
 
   // Error handling helpers
   def fail[A](error: String): UseCaseOperation[A] =

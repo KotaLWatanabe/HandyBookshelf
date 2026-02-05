@@ -2,23 +2,22 @@ package com.handybookshelf
 package adopter
 
 import cats.effect.IO
-import cats.implicits.*
-import com.handybookshelf.util.{ISBN, *}
+import com.handybookshelf.util.ISBN
 import com.handybookshelf.domain.Book
 import com.handybookshelf.nes
 import com.handybookshelf.util.ISBN.isbnOpt
-import org.http4s.Uri
 import org.http4s.ember.client.EmberClientBuilder
 import org.http4s.implicits.*
 
+import scala.annotation.unused
 import scala.concurrent.duration.Duration
-import scala.util.Try
 import scala.xml.*
 
 // https://iss.ndl.go.jp/information/api/riyou/#sec3
 object かKokkaiToshokanAccessor:
 
   import org.http4s.QueryParamEncoder.stringQueryParamEncoder
+  @unused
   private def searchAPIURL(title: String) =
     uri"https://iss.ndl.go.jp/api/opensearch" ++? ("title", List(title))
 
@@ -29,6 +28,7 @@ object かKokkaiToshokanAccessor:
 
   private val bookTitle = "Pekko実践バイブル"
 
+  @unused
   private val httpClientBuilt =
     EmberClientBuilder.default[IO].withTimeout(Duration.Inf).build
 
@@ -48,6 +48,7 @@ object かKokkaiToshokanAccessor:
 //      }
 //    }
 
+  @unused
   private def xmlToBooks(elem: Elem): Seq[(ISBN, String)] =
     for {
       item  <- elem \\ "item"

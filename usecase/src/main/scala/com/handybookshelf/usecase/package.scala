@@ -1,5 +1,7 @@
 package com.handybookshelf
 
+import cats.effect.IO
+
 package object usecase {
 
   // Simplified effect stack for compilation

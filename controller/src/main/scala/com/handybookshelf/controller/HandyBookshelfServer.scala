@@ -11,8 +11,11 @@ import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.implicits.*
 import org.http4s.server.middleware.Logger
 import com.handybookshelf.infrastructure.actors.{SupervisorActor, SupervisorActorUtil}
-import com.handybookshelf.infrastructure.{ActorBasedUserStateRepository, AsyncTaskService, ExecutionContexts, InMemoryEventStore, SessionService, UserStateRepository}
+import com.handybookshelf.infrastructure.{ActorBasedUserStateRepository, AsyncTaskService, BookRepositoryImpl, ExecutionContexts, IdentifierIndex, InMemoryEventStore, SessionService, UserStateRepository}
+import com.handybookshelf.domain.services.BookRegistrationService
 import com.handybookshelf.usecase.{RegisterBookUseCase, UserCommandUseCase, UserQueryUseCase}
+import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import org.apache.pekko.actor.typed.ActorSystem
 
 object HandyBookshelfServer:
@@ -49,10 +52,14 @@ object HandyBookshelfServer:
 
       // Create async task service
       asyncTaskService = AsyncTaskService.create
-      
+
       // Create dependencies for book registration
-      registerBookUseCase = RegisterBookUseCase.create()
-      
+      eventStore = new InMemoryEventStore()
+      identifierIndex <- Resource.eval(IdentifierIndex.inMemory)
+      bookRepository = new BookRepositoryImpl(eventStore, identifierIndex)
+      bookRegistrationService = BookRegistrationService[IO](bookRepository)
+      registerBookUseCase = RegisterBookUseCase.create(bookRegistrationService, bookRepository)
+
       // Create user state use cases
       userCommandUseCase = UserCommandUseCase.create(userStateRepository)
       userQueryUseCase = UserQueryUseCase.create(userStateRepository)
