@@ -1,8 +1,10 @@
 package com.handybookshelf
 package usecase
 
+import cats.data.Writer
 import cats.effect.IO
-import org.atnos.eff.Fx
+import org.atnos.eff.{<=, Fx, |=}
+
 
 object EffectStack {
 
@@ -10,9 +12,7 @@ object EffectStack {
       timeout: Long,
       retryCount: Int
   )
-
-  type EffectStack = Fx.fx3[IO, Either[UseCaseError, *], Writer[String, *]]
-
+  
   // Simplified effect type for compilation
   type UseCaseOperation[A] = IO[Either[String, A]]
 

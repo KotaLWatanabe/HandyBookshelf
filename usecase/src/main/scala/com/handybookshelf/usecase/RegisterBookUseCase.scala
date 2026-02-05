@@ -1,8 +1,13 @@
 package com.handybookshelf
 package usecase
 
+import cats.data.Writer
 import cats.effect.IO
 import cats.syntax.all.*
+import org.atnos.eff.*
+import org.atnos.eff.all.*
+import org.atnos.eff.syntax.all.*
+import org.atnos.eff.addon.cats.effect.IOEffect.{_Io, _io}
 
 final case class RegisterBookCommand(
     isbn: Option[String],
@@ -15,37 +20,31 @@ final case class RegisterBookResult(
     message: String
 )
 
-class RegisterBookUseCase extends RegisterBookUseCase:
-
-  def execute(command: RegisterBookCommand): UsecaseEff[RegisterBookResult] =
-    (for {
+class RegisterBookUseCase:
+  def execute[R : {_Io, _usecaseError, _writer}](command: RegisterBookCommand): Eff[R, RegisterBookResult] =
+    for {
       // Simple validation
-      _ <- validateInput(command)
-      
+      _ <- fromEither(validateInput(command))
+
       // Generate a simple book ID
       bookId = generateBookId(command.title)
-      
+
       _ <- logInfo(s"Successfully registered book: $bookId")
-      
+
     } yield RegisterBookResult(
       bookId = bookId,
       success = true,
       message = "Book registered successfully"
-    )).handleErrorWith { throwable =>
-      val errorMsg = s"Failed to register book: ${throwable.getMessage}"
-      logError(errorMsg) *> error(UseCaseError.InternalError(errorMsg))
-    }
+    )
 
-  private def validateInput(command: RegisterBookCommand): UsecaseEff[Unit] =
-    if (command.title.trim.isEmpty) {
-      error(UseCaseError.ValidationError("Title cannot be empty"))
-    } else {
-      pure(())
-    }
+  private def validateInput(command: RegisterBookCommand): Either[UseCaseError, Unit] =
+    Either.cond(command.title.trim.nonEmpty, (), UseCaseError.ValidationError("Title cannot be empty"))
 
   private def generateBookId(title: String): String =
     s"book_${title.take(10).replaceAll("[^a-zA-Z0-9]", "_")}_${System.currentTimeMillis()}"
 
+  private def logInfo[R : _writer](message: String): Eff[R, Unit] =
+    tell(message)
+
 object RegisterBookUseCase:
-  def create(): RegisterBookUseCase =
-    new RegisterBookUseCaseImpl()
+  def create(): RegisterBookUseCase = new RegisterBookUseCase()

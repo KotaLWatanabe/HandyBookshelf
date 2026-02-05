@@ -60,6 +60,7 @@ object Libraries {
     "com.softwaremill.sttp.apispec" %% "openapi-circe-yaml" % "0.11.9"
   )
   lazy val atnosEff = "org.atnos" %% "eff" % atnosEffVersion
+  lazy val atnosEffCatsEff = "org.atnos" %% "eff-cats-effect" % atnosEffVersion
 
   lazy val pekko: Seq[ModuleID] = Seq(
     "org.apache.pekko" %% "pekko-actor-typed"         % pekkoVersion,
@@ -98,7 +99,8 @@ object Libraries {
       refined,
       xml,
       slf4j,
-      atnosEff
+      atnosEff,
+      atnosEffCatsEff
     ) ++ http4s ++ tapir ++ sttp ++ pekko ++ fs2
   val chapter1: Seq[ModuleID] = Seq(catsEffect)
 }
