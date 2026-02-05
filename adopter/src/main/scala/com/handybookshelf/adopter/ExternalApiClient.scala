@@ -2,9 +2,8 @@ package com.handybookshelf
 package adopter
 
 import cats.effect.IO
-import cats.syntax.all.*
-import io.circe.{Decoder, Encoder, Json}
-import org.http4s.{Uri, Method, Request, Response, Status}
+import io.circe.{Decoder, Encoder}
+import org.http4s.{Uri, Method, Request, Status}
 import org.http4s.client.Client
 import org.http4s.circe.*
 import org.http4s.circe.CirceEntityEncoder.circeEntityEncoder
@@ -98,9 +97,7 @@ class Http4sExternalApiClient(
     client: Client[IO],
     config: ApiClientConfig
 ) extends ExternalApiClient {
-  
-  import org.http4s.implicits.*
-  
+
   def get[R: Decoder](
     path: String,
     queryParams: Map[String, String] = Map.empty,

@@ -484,7 +484,41 @@ DELETE /api/books/{bookId}/ebook-links/{platform}
 
 ---
 
-## 17. 未実装課題
+## 17. データベース選定（2026-02-05）
+
+### Writeモデル: **DynamoDB**
+
+| 項目 | 決定 |
+|------|------|
+| 採用DB | DynamoDB |
+| 開発環境 | DynamoDB Local |
+| 本番環境 | AWS DynamoDB (On-Demand) |
+| スキーマ | `persistence_id` (PK) + `sequence_nr` (SK) |
+| 既存実装 | `DynamoDBEventStore.scala` |
+
+**理由**: DynamoDB LocalでAPI完全互換、イベントソーシングのアクセスパターンに最適
+
+### Readモデル: **Elasticsearch**
+
+| 項目 | 決定 |
+|------|------|
+| 採用DB | Elasticsearch 8.x |
+| 開発環境 | Docker Compose (8.11.0) |
+| 本番環境 | AWS OpenSearch または Elastic Cloud |
+| 日本語対応 | kuromoji analyzer |
+| 既存実装 | `ElasticsearchClient.scala` |
+
+**理由**: 日本語全文検索、複合検索、集約クエリに最適。全ユーザー書籍検索に対応
+
+### 不採用
+- ScyllaDB: 開発環境セットアップが煩雑
+- PostgreSQL: 水平スケーリング困難、全文検索は拡張必要
+- EventStoreDB: Scalaドライバが非公式
+- MongoDB: 全文検索はAtlas Search必要
+
+---
+
+## 18. 未実装課題
 
 - [ ] BookshelfActor実装
 - [ ] BookshelfState（デュアルインデックス）

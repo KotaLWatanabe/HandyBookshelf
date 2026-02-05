@@ -5,9 +5,6 @@ import cats.effect.{IO, Ref, Temporal}
 import cats.syntax.all.*
 import scala.concurrent.duration.*
 
-import CircuitBreakerState.*
-import CircuitBreakerError.*
-
 // Circuit breaker states
 enum CircuitBreakerState:
   case Closed, Open, HalfOpen
@@ -27,7 +24,7 @@ final case class CircuitBreakerStats(
     failedCalls: Long = 0,
     consecutiveFailures: Int = 0,
     lastFailureTime: Option[Long] = None,
-    state: CircuitBreakerState = Closed
+    state: CircuitBreakerState = CircuitBreakerState.Closed
 )
 
 // Circuit breaker errors
@@ -47,11 +44,11 @@ class CircuitBreaker[F[_]: Temporal] private (
     for {
       currentStats <- statsRef.get
       result <- currentStats.state match {
-        case Closed =>
+        case CircuitBreakerState.Closed =>
           executeInClosedState(operation)
-        case Open =>
+        case CircuitBreakerState.Open =>
           executeInOpenState(operation)
-        case HalfOpen =>
+        case CircuitBreakerState.HalfOpen =>
           executeInHalfOpenState(operation)
       }
     } yield result
@@ -84,7 +81,7 @@ class CircuitBreaker[F[_]: Temporal] private (
         case Some(lastFailure) if (currentTime - lastFailure) >= config.recoveryTimeout.toMillis =>
           transitionToHalfOpen() *> executeInHalfOpenState(operation)
         case _ =>
-          Temporal[F].pure(Left(CircuitBreakerOpenError))
+          Temporal[F].pure(Left(CircuitBreakerError.CircuitBreakerOpenError))
       }
     } yield result
   }
@@ -102,7 +99,7 @@ class CircuitBreaker[F[_]: Temporal] private (
             recordFailure() *> transitionToOpen() *> Temporal[F].pure(Left(error))
         }
       } else {
-        Temporal[F].pure(Left(CircuitBreakerOpenError))
+        Temporal[F].pure(Left(CircuitBreakerError.CircuitBreakerOpenError))
       }
     } yield result
   }
@@ -110,7 +107,7 @@ class CircuitBreaker[F[_]: Temporal] private (
   private def executeWithTimeout[A](operation: F[A]): F[Either[CircuitBreakerError, A]] = {
     Temporal[F].timeout(operation, config.callTimeout)
       .map(Right(_))
-      .handleError(_ => Left(CircuitBreakerTimeoutError))
+      .handleError(_ => Left(CircuitBreakerError.CircuitBreakerTimeoutError))
   }
   
   private def recordSuccess(): F[Unit] = {
@@ -140,17 +137,17 @@ class CircuitBreaker[F[_]: Temporal] private (
   }
   
   private def transitionToOpen(): F[Unit] = {
-    statsRef.update(_.copy(state = Open))
+    statsRef.update(_.copy(state = CircuitBreakerState.Open))
   }
   
   private def transitionToHalfOpen(): F[Unit] = {
-    statsRef.update(_.copy(state = HalfOpen, totalCalls = 0))
+    statsRef.update(_.copy(state = CircuitBreakerState.HalfOpen, totalCalls = 0))
   }
   
   private def checkTransitionToClosed(): F[Unit] = {
     statsRef.get.flatMap { stats =>
       if (stats.successfulCalls >= config.halfOpenMaxCalls) {
-        statsRef.update(_.copy(state = Closed, consecutiveFailures = 0))
+        statsRef.update(_.copy(state = CircuitBreakerState.Closed, consecutiveFailures = 0))
       } else {
         Temporal[F].unit
       }
@@ -186,13 +183,13 @@ class CircuitBreakerApiClient(
   ): IO[Either[ExternalApiError, R]] = {
     circuitBreaker.execute(underlying.get[R](path, queryParams, headers)).flatMap {
       case Right(result) => IO.pure(result)
-      case Left(CircuitBreakerOpenError) => 
+      case Left(CircuitBreakerError.CircuitBreakerOpenError) =>
         IO.pure(Left(ExternalApiError.NetworkError("Service temporarily unavailable (circuit breaker open)")))
-      case Left(CircuitBreakerTimeoutError) => 
+      case Left(CircuitBreakerError.CircuitBreakerTimeoutError) =>
         IO.pure(Left(ExternalApiError.TimeoutError("Request timeout")))
     }
   }
-  
+
   def post[T: Encoder, R: Decoder](
     path: String,
     body: T,
@@ -200,13 +197,13 @@ class CircuitBreakerApiClient(
   ): IO[Either[ExternalApiError, R]] = {
     circuitBreaker.execute(underlying.post[T, R](path, body, headers)).flatMap {
       case Right(result) => IO.pure(result)
-      case Left(CircuitBreakerOpenError) => 
+      case Left(CircuitBreakerError.CircuitBreakerOpenError) =>
         IO.pure(Left(ExternalApiError.NetworkError("Service temporarily unavailable (circuit breaker open)")))
-      case Left(CircuitBreakerTimeoutError) => 
+      case Left(CircuitBreakerError.CircuitBreakerTimeoutError) =>
         IO.pure(Left(ExternalApiError.TimeoutError("Request timeout")))
     }
   }
-  
+
   def put[T: Encoder, R: Decoder](
     path: String,
     body: T,
@@ -214,26 +211,26 @@ class CircuitBreakerApiClient(
   ): IO[Either[ExternalApiError, R]] = {
     circuitBreaker.execute(underlying.put[T, R](path, body, headers)).flatMap {
       case Right(result) => IO.pure(result)
-      case Left(CircuitBreakerOpenError) => 
+      case Left(CircuitBreakerError.CircuitBreakerOpenError) =>
         IO.pure(Left(ExternalApiError.NetworkError("Service temporarily unavailable (circuit breaker open)")))
-      case Left(CircuitBreakerTimeoutError) => 
+      case Left(CircuitBreakerError.CircuitBreakerTimeoutError) =>
         IO.pure(Left(ExternalApiError.TimeoutError("Request timeout")))
     }
   }
-  
+
   def delete[R: Decoder](
     path: String,
     headers: Map[String, String] = Map.empty
   ): IO[Either[ExternalApiError, R]] = {
     circuitBreaker.execute(underlying.delete[R](path, headers)).flatMap {
       case Right(result) => IO.pure(result)
-      case Left(CircuitBreakerOpenError) => 
+      case Left(CircuitBreakerError.CircuitBreakerOpenError) =>
         IO.pure(Left(ExternalApiError.NetworkError("Service temporarily unavailable (circuit breaker open)")))
-      case Left(CircuitBreakerTimeoutError) => 
+      case Left(CircuitBreakerError.CircuitBreakerTimeoutError) =>
         IO.pure(Left(ExternalApiError.TimeoutError("Request timeout")))
     }
   }
-  
+
   def getRaw(
     path: String,
     queryParams: Map[String, String] = Map.empty,
@@ -241,13 +238,13 @@ class CircuitBreakerApiClient(
   ): IO[Either[ExternalApiError, String]] = {
     circuitBreaker.execute(underlying.getRaw(path, queryParams, headers)).flatMap {
       case Right(result) => IO.pure(result)
-      case Left(CircuitBreakerOpenError) => 
+      case Left(CircuitBreakerError.CircuitBreakerOpenError) =>
         IO.pure(Left(ExternalApiError.NetworkError("Service temporarily unavailable (circuit breaker open)")))
-      case Left(CircuitBreakerTimeoutError) => 
+      case Left(CircuitBreakerError.CircuitBreakerTimeoutError) =>
         IO.pure(Left(ExternalApiError.TimeoutError("Request timeout")))
     }
   }
-  
+
   def postRaw(
     path: String,
     body: String,
@@ -255,13 +252,13 @@ class CircuitBreakerApiClient(
   ): IO[Either[ExternalApiError, String]] = {
     circuitBreaker.execute(underlying.postRaw(path, body, headers)).flatMap {
       case Right(result) => IO.pure(result)
-      case Left(CircuitBreakerOpenError) => 
+      case Left(CircuitBreakerError.CircuitBreakerOpenError) =>
         IO.pure(Left(ExternalApiError.NetworkError("Service temporarily unavailable (circuit breaker open)")))
-      case Left(CircuitBreakerTimeoutError) => 
+      case Left(CircuitBreakerError.CircuitBreakerTimeoutError) =>
         IO.pure(Left(ExternalApiError.TimeoutError("Request timeout")))
     }
   }
-  
+
   def healthCheck(): IO[Boolean] = {
     underlying.healthCheck()
   }
