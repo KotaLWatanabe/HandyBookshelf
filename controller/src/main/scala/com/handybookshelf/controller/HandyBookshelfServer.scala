@@ -11,7 +11,16 @@ import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.implicits.*
 import org.http4s.server.middleware.Logger
 import com.handybookshelf.infrastructure.actors.{SupervisorActor, SupervisorActorUtil}
-import com.handybookshelf.infrastructure.{ActorBasedUserStateRepository, AsyncTaskService, BookRepositoryImpl, ExecutionContexts, IdentifierIndex, InMemoryEventStore, SessionService, UserStateRepository}
+import com.handybookshelf.infrastructure.{
+  ActorBasedUserStateRepository,
+  AsyncTaskService,
+  BookRepositoryImpl,
+  ExecutionContexts,
+  IdentifierIndex,
+  InMemoryEventStore,
+  SessionService,
+  UserStateRepository
+}
 import com.handybookshelf.domain.services.BookRegistrationService
 import com.handybookshelf.usecase.{RegisterBookUseCase, UserCommandUseCase, UserQueryUseCase}
 import cats.effect.IO
@@ -26,25 +35,27 @@ object HandyBookshelfServer:
         SessionService.create(eventStore).unsafeRunSync()
       }
     )
-    
-    val supervisorSystemResource: Resource[F, ActorSystem[SupervisorActor.SupervisorCommand]] = sessionServiceResource.flatMap { sessionService =>
-      Resource.make(
-        Async[F].delay { SupervisorActorUtil.createSupervisorSystem(sessionService) }
-      )(system => Async[F].delay { system.terminate() })
-    }
+
+    val supervisorSystemResource: Resource[F, ActorSystem[SupervisorActor.SupervisorCommand]] =
+      sessionServiceResource.flatMap { sessionService =>
+        Resource.make(
+          Async[F].delay { SupervisorActorUtil.createSupervisorSystem(sessionService) }
+        )(system => Async[F].delay { system.terminate() })
+      }
 
     def executionContextsResource: Resource[F, ExecutionContexts.ExecutionContextBundle] =
       ExecutionContexts.createExecutionContextBundle
 
-    def userStateRepositoryResource
-    (using actorSystem: ActorSystem[SupervisorActor.SupervisorCommand]): Resource[F, UserStateRepository] =
+    def userStateRepositoryResource(using
+        actorSystem: ActorSystem[SupervisorActor.SupervisorCommand]
+    ): Resource[F, UserStateRepository] =
       Resource.eval(ActorBasedUserStateRepository.create())
 
     for {
       // Create execution context bundle
-      executionContexts <-executionContextsResource
+      executionContexts <- executionContextsResource
       given ExecutionContexts.ExecutionContextBundle = executionContexts
-      
+
       supervisorSystem <- supervisorSystemResource
 
       // Create user state repository using actor system
@@ -56,16 +67,16 @@ object HandyBookshelfServer:
       // Create dependencies for book registration
       eventStore = new InMemoryEventStore()
       identifierIndex <- Resource.eval(IdentifierIndex.inMemory)
-      bookRepository = new BookRepositoryImpl(eventStore, identifierIndex)
+      bookRepository          = new BookRepositoryImpl(eventStore, identifierIndex)
       bookRegistrationService = BookRegistrationService[IO](bookRepository)
-      registerBookUseCase = RegisterBookUseCase.create(bookRegistrationService, bookRepository)
+      registerBookUseCase     = RegisterBookUseCase.create(bookRegistrationService, bookRepository)
 
       // Create user state use cases
       userCommandUseCase = UserCommandUseCase.create(userStateRepository)
-      userQueryUseCase = UserQueryUseCase.create(userStateRepository)
-      
-      loginRoutes = LoginRoutes[F](supervisorSystem)
-      bookRoutes = BookRoutes[F](registerBookUseCase)
+      userQueryUseCase   = UserQueryUseCase.create(userStateRepository)
+
+      loginRoutes     = LoginRoutes[F](supervisorSystem)
+      bookRoutes      = BookRoutes[F](registerBookUseCase)
       userStateRoutes = UserStateRoutes[F](userCommandUseCase, userQueryUseCase)
 
       // Combine Service Routes into an HttpApp.

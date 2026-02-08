@@ -15,10 +15,10 @@ class DocumentationRoutes[F[_]: Async] {
   private val swaggerEndpoints = SwaggerInterpreter()
     .fromServerEndpoints[F](
       List(
-        OpenApiDocumentation.openApiSpecEndpoint.serverLogicSuccess[F](_ => 
+        OpenApiDocumentation.openApiSpecEndpoint.serverLogicSuccess[F](_ =>
           Async[F].pure(OpenApiDocumentation.openApiYaml)
         ),
-        OpenApiDocumentation.openApiJsonEndpoint.serverLogicSuccess[F](_ => 
+        OpenApiDocumentation.openApiJsonEndpoint.serverLogicSuccess[F](_ =>
           Async[F].pure(OpenApiDocumentation.openApiJson)
         )
       ),
@@ -28,22 +28,22 @@ class DocumentationRoutes[F[_]: Async] {
 
   val routes: HttpRoutes[F] = {
     val interpreter = Http4sServerInterpreter[F]()
-    
+
     // Swagger UI routes
     val swaggerRoutes = interpreter.toRoutes(swaggerEndpoints)
-    
+
     // OpenAPI spec routes
     val specRoutes = interpreter.toRoutes(
       List(
-        OpenApiDocumentation.openApiSpecEndpoint.serverLogicSuccess[F](_ => 
+        OpenApiDocumentation.openApiSpecEndpoint.serverLogicSuccess[F](_ =>
           Async[F].pure(OpenApiDocumentation.openApiYaml)
         ),
-        OpenApiDocumentation.openApiJsonEndpoint.serverLogicSuccess[F](_ => 
+        OpenApiDocumentation.openApiJsonEndpoint.serverLogicSuccess[F](_ =>
           Async[F].pure(OpenApiDocumentation.openApiJson)
         )
       )
     )
-    
+
     swaggerRoutes <+> specRoutes
   }
 }

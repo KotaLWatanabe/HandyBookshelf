@@ -22,7 +22,7 @@ object Timestamp:
   private[util] def apply(value: ZonedDateTime): Timestamp = new Timestamp(value)
   val systemZoneId: ZoneId                                 = ZoneId.of("Asia/Tokyo")
   val init: Timestamp                                      = Timestamp.fromEpochMillis(0L)
-  
+
   def now: Timestamp = Timestamp(ZonedDateTime.now(systemZoneId))
 
   def fromEpochMillis(epochMillis: Long): Timestamp =

@@ -10,7 +10,7 @@ package object usecase:
 
   type _UsecaseEither[A] = Either[UseCaseError, A]
   type _usecaseError[R]  = _UsecaseEither |= R
-  
+
   type _writer[R] = Writer[String, *] |= R
 
   // Convenience methods for common operations
@@ -25,7 +25,7 @@ package object usecase:
 
   def fromEither[A](either: Either[UseCaseError, A]): Eff[EffectStack, A] =
     EitherEffect.fromEither(either)
-    
+
   def logInfo(message: String): Eff[EffectStack, Unit] = ???
 
   def logError(message: String): Eff[EffectStack, Unit] = ???
