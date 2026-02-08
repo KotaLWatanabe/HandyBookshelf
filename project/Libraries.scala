@@ -2,7 +2,7 @@ import sbt.*
 
 object Libraries {
   val catsVersion            = "2.13.0"
-  val catsEffectVersion      = "3.6.1"
+  val catsEffectVersion      = "3.6.3"
   val scalaTestVersion       = "3.2.19"
   val http4sVersion          = "0.23.30"
   val circeVersion           = "0.14.14"
@@ -44,10 +44,10 @@ object Libraries {
     "org.wvlet.airframe" %% "airframe-ulid" % ulidVersion
   lazy val circe = "io.circe" %% "circe-generic" % circeVersion
 
-  lazy val iron     = "io.github.iltotore"     %% "iron"      % ironVersion
+  lazy val iron = "io.github.iltotore" %% "iron" % ironVersion
 //  lazy val ironCats = "io.github.iltotore"     %% "iron-cats" % ironVersion
-  lazy val refined  = "eu.timepit"             %% "refined"   % "0.11.3"
-  lazy val xml      = "org.scala-lang.modules" %% "scala-xml" % xmlVersion
+  lazy val refined = "eu.timepit"             %% "refined"   % "0.11.3"
+  lazy val xml     = "org.scala-lang.modules" %% "scala-xml" % xmlVersion
   lazy val tapir: Seq[ModuleID] = Seq(
     "com.softwaremill.sttp.tapir" %% "tapir-core"              % tapirVersion,
     "com.softwaremill.sttp.tapir" %% "tapir-http4s-server"     % tapirVersion,
@@ -59,7 +59,7 @@ object Libraries {
   lazy val sttp: Seq[ModuleID] = Seq(
     "com.softwaremill.sttp.apispec" %% "openapi-circe-yaml" % "0.11.9"
   )
-  lazy val atnosEff = "org.atnos" %% "eff" % atnosEffVersion
+  lazy val atnosEff        = "org.atnos" %% "eff"             % atnosEffVersion
   lazy val atnosEffCatsEff = "org.atnos" %% "eff-cats-effect" % atnosEffVersion
 
   lazy val pekko: Seq[ModuleID] = Seq(
@@ -77,7 +77,7 @@ object Libraries {
   )
 
   lazy val dynamodb: Seq[ModuleID] = Seq(
-    "software.amazon.awssdk" % "dynamodb"       % awsVersion,
+    "software.amazon.awssdk" % "dynamodb"              % awsVersion,
     "software.amazon.awssdk" % "url-connection-client" % awsVersion
   )
 
