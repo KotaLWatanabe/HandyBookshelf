@@ -21,7 +21,7 @@ final case class RegisterBookResult(
 )
 
 class RegisterBookUseCase:
-  def execute[R : {_Io, _usecaseError, _writer}](command: RegisterBookCommand): Eff[R, RegisterBookResult] =
+  def execute[R: {_Io, _usecaseError, _writer}](command: RegisterBookCommand): Eff[R, RegisterBookResult] =
     for {
       // Simple validation
       _ <- fromEither(validateInput(command))
@@ -43,7 +43,7 @@ class RegisterBookUseCase:
   private def generateBookId(title: String): String =
     s"book_${title.take(10).replaceAll("[^a-zA-Z0-9]", "_")}_${System.currentTimeMillis()}"
 
-  private def logInfo[R : _writer](message: String): Eff[R, Unit] =
+  private def logInfo[R: _writer](message: String): Eff[R, Unit] =
     tell(message)
 
 object RegisterBookUseCase:

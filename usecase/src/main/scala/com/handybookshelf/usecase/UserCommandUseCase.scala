@@ -4,7 +4,12 @@ package usecase
 import cats.effect.IO
 import cats.syntax.all.*
 import com.handybookshelf.domain.UserAccountId
-import com.handybookshelf.infrastructure.{UserStateRepository, LoginUserCommand, LogoutUserCommand, UpdateUserActivityCommand}
+import com.handybookshelf.infrastructure.{
+  UserStateRepository,
+  LoginUserCommand,
+  LogoutUserCommand,
+  UpdateUserActivityCommand
+}
 
 final case class LoginCommandRequest(
     userAccountId: String,

@@ -11,9 +11,9 @@ import io.circe.syntax.*
 
 // Authentication error types
 enum AuthError(val message: String, val status: Status):
-  case MissingToken extends AuthError("Authorization token is missing", Status.Unauthorized)
-  case InvalidToken extends AuthError("Authorization token is invalid", Status.Unauthorized)
-  case ExpiredToken extends AuthError("Authorization token has expired", Status.Unauthorized)
+  case MissingToken            extends AuthError("Authorization token is missing", Status.Unauthorized)
+  case InvalidToken            extends AuthError("Authorization token is invalid", Status.Unauthorized)
+  case ExpiredToken            extends AuthError("Authorization token has expired", Status.Unauthorized)
   case InsufficientPermissions extends AuthError("Insufficient permissions for this resource", Status.Forbidden)
 
 // User context from authentication
@@ -36,47 +36,51 @@ trait TokenService[F[_]] {
 
 // Simple implementation for demonstration
 class SimpleTokenService[F[_]: Async] extends TokenService[F] {
-  
+
   // In a real implementation, this would validate JWT, check database, etc.
   def validateToken(token: String): F[Either[AuthError, AuthenticatedUser]] = {
     Async[F].delay {
       token match {
-        case "valid-admin-token" => 
-          Right(AuthenticatedUser(
-            userId = "admin-123",
-            roles = Set("admin", "user"),
-            permissions = Set("read", "write", "admin")
-          ))
-        case "valid-user-token" => 
-          Right(AuthenticatedUser(
-            userId = "user-456",
-            roles = Set("user"),
-            permissions = Set("read", "write")
-          ))
-        case "expired-token" => 
+        case "valid-admin-token" =>
+          Right(
+            AuthenticatedUser(
+              userId = "admin-123",
+              roles = Set("admin", "user"),
+              permissions = Set("read", "write", "admin")
+            )
+          )
+        case "valid-user-token" =>
+          Right(
+            AuthenticatedUser(
+              userId = "user-456",
+              roles = Set("user"),
+              permissions = Set("read", "write")
+            )
+          )
+        case "expired-token" =>
           Left(AuthError.ExpiredToken)
-        case _ => 
+        case _ =>
           Left(AuthError.InvalidToken)
       }
     }
   }
-  
+
   def extractToken(request: Request[F]): Option[String] = {
     request.headers.get[Authorization].flatMap {
       case Authorization(Credentials.Token(AuthScheme.Bearer, token)) => Some(token)
-      case _ => None
+      case _                                                          => None
     }
   }
 }
 
 // Authentication middleware
 object AuthenticationMiddleware {
-  
+
   def apply[F[_]: Async](
-    tokenService: TokenService[F],
-    onFailure: AuthError => Response[F] = defaultAuthFailureResponse[F]
+      tokenService: TokenService[F],
+      onFailure: AuthError => Response[F] = defaultAuthFailureResponse[F]
   ): AuthMiddleware[F, AuthenticatedUser] = {
-    
+
     val authUser: Kleisli[F, Request[F], Either[String, AuthenticatedUser]] = Kleisli { request =>
       tokenService.extractToken(request) match {
         case Some(token) =>
@@ -88,13 +92,13 @@ object AuthenticationMiddleware {
           Async[F].pure(Left(AuthError.MissingToken.message))
       }
     }
-    
+
     AuthMiddleware(authUser, onFailure = _ => defaultAuthFailureResponse())
   }
-  
+
   // Optional authentication (doesn't fail if no token)
   def optional[F[_]: Async](
-    tokenService: TokenService[F]
+      tokenService: TokenService[F]
   ): HttpMiddleware[F] = { routes =>
     HttpRoutes.of[F] { request =>
       tokenService.extractToken(request) match {
@@ -113,26 +117,26 @@ object AuthenticationMiddleware {
       }
     }
   }
-  
+
   // Key for storing authenticated user in request attributes
   val AuthenticatedUserKey: Key[AuthenticatedUser] = Key.newKey[SyncIO, AuthenticatedUser].unsafeRunSync()
-  
+
   // Default authentication failure response
   def defaultAuthFailureResponse[F[_]: Async](error: AuthError = AuthError.MissingToken): Response[F] = {
     Response[F](status = error.status)
       .withEntity(Map("error" -> error.message, "code" -> error.status.code).asJson)
   }
-  
+
   // Extract authenticated user from request (for use in routes)
   def getAuthenticatedUser[F[_]](request: Request[F]): Option[AuthenticatedUser] = {
     request.attributes.lookup(AuthenticatedUserKey)
   }
-  
+
   // Permission checking helper
   def hasPermission(user: AuthenticatedUser, requiredPermission: String): Boolean = {
     user.permissions.contains(requiredPermission) || user.roles.contains("admin")
   }
-  
+
   def hasAnyRole(user: AuthenticatedUser, requiredRoles: Set[String]): Boolean = {
     user.roles.intersect(requiredRoles).nonEmpty || user.roles.contains("admin")
   }
@@ -140,12 +144,12 @@ object AuthenticationMiddleware {
 
 // Permission-based middleware
 object PermissionMiddleware {
-  
+
   def requirePermission[F[_]: Async](
-    permission: String,
-    onDenied: Response[F] = Response[F](Status.Forbidden).withEntity(
-      Map("error" -> "Insufficient permissions").asJson
-    )
+      permission: String,
+      onDenied: Response[F] = Response[F](Status.Forbidden).withEntity(
+        Map("error" -> "Insufficient permissions").asJson
+      )
   ): HttpMiddleware[F] = { routes =>
     HttpRoutes.of[F] { request =>
       AuthenticationMiddleware.getAuthenticatedUser(request) match {
@@ -158,12 +162,12 @@ object PermissionMiddleware {
       }
     }
   }
-  
+
   def requireRole[F[_]: Async](
-    roles: Set[String],
-    onDenied: Response[F] = Response[F](Status.Forbidden).withEntity(
-      Map("error" -> "Insufficient role").asJson
-    )
+      roles: Set[String],
+      onDenied: Response[F] = Response[F](Status.Forbidden).withEntity(
+        Map("error" -> "Insufficient role").asJson
+      )
   ): HttpMiddleware[F] = { routes =>
     HttpRoutes.of[F] { request =>
       AuthenticationMiddleware.getAuthenticatedUser(request) match {
