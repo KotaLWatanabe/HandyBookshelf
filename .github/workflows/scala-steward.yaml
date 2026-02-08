@@ -13,17 +13,12 @@ jobs:
   scala-steward:
     runs-on: ubuntu-latest
     name: Scala Steward
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Disable GPG signing
         run: git config --global commit.gpgsign false
-      - name: Generate token
-        id: generate_token
-        uses: actions/create-github-app-token@v2
-        with:
-          owner: 'KotaLWatanabe'
-          repositories: 'HandyBookshelf'
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Install sbt
         uses: sbt/setup-sbt@v1
@@ -31,7 +26,7 @@ jobs:
       - name: Scala Steward
         uses: scala-steward-org/scala-steward-action@v2
         with:
-          github-token: ${{ steps.generate_token.outputs.token }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           author-email: 'me@formalcalculation.com'
           author-name: 'Scala Steward'
           sign-commits: false
