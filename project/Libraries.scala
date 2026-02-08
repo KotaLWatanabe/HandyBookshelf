@@ -24,7 +24,7 @@ object Libraries {
   lazy val catsEffect = "org.typelevel" %% "cats-effect" % catsEffectVersion
   lazy val scalaTest =
     "org.scalatest" %% "scalatest" % scalaTestVersion % Test
-  lazy val scalaCheck = "org.scalacheck" %% "scalacheck" % "1.18.1" % Test
+  lazy val scalaCheck = "org.scalacheck" %% "scalacheck" % "1.19.0" % Test
   lazy val scalaTestCheck =
     "org.scalatestplus" %% "scalacheck-1-17" % "3.2.18.0" % Test
   lazy val http4s: Seq[ModuleID] = Seq(
@@ -44,10 +44,10 @@ object Libraries {
     "org.wvlet.airframe" %% "airframe-ulid" % ulidVersion
   lazy val circe = "io.circe" %% "circe-generic" % circeVersion
 
-  lazy val iron     = "io.github.iltotore"     %% "iron"      % ironVersion
+  lazy val iron = "io.github.iltotore" %% "iron" % ironVersion
 //  lazy val ironCats = "io.github.iltotore"     %% "iron-cats" % ironVersion
-  lazy val refined  = "eu.timepit"             %% "refined"   % "0.11.3"
-  lazy val xml      = "org.scala-lang.modules" %% "scala-xml" % xmlVersion
+  lazy val refined = "eu.timepit"             %% "refined"   % "0.11.3"
+  lazy val xml     = "org.scala-lang.modules" %% "scala-xml" % xmlVersion
   lazy val tapir: Seq[ModuleID] = Seq(
     "com.softwaremill.sttp.tapir" %% "tapir-core"              % tapirVersion,
     "com.softwaremill.sttp.tapir" %% "tapir-http4s-server"     % tapirVersion,
@@ -59,7 +59,7 @@ object Libraries {
   lazy val sttp: Seq[ModuleID] = Seq(
     "com.softwaremill.sttp.apispec" %% "openapi-circe-yaml" % "0.11.9"
   )
-  lazy val atnosEff = "org.atnos" %% "eff" % atnosEffVersion
+  lazy val atnosEff        = "org.atnos" %% "eff"             % atnosEffVersion
   lazy val atnosEffCatsEff = "org.atnos" %% "eff-cats-effect" % atnosEffVersion
 
   lazy val pekko: Seq[ModuleID] = Seq(
@@ -77,7 +77,7 @@ object Libraries {
   )
 
   lazy val dynamodb: Seq[ModuleID] = Seq(
-    "software.amazon.awssdk" % "dynamodb"       % awsVersion,
+    "software.amazon.awssdk" % "dynamodb"              % awsVersion,
     "software.amazon.awssdk" % "url-connection-client" % awsVersion
   )
 
