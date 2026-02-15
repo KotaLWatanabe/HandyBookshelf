@@ -38,7 +38,7 @@ object Libraries {
     "org.typelevel" %% "munit-cats-effect-3" % munitCatsEffectVersion % Test
   lazy val logback =
     "ch.qos.logback" % "logback-classic" % logbackVersion
-  lazy val slf4j = "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.25.0"
+  lazy val slf4j = "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.25.3"
 
   lazy val ulid =
     "org.wvlet.airframe" %% "airframe-ulid" % ulidVersion
