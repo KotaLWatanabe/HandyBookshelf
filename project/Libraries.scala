@@ -17,7 +17,7 @@ object Libraries {
   val pekkoVersion           = "1.1.4"
   val cassandraDriverVersion = "4.17.0"
   val awsVersion             = "2.29.52"
-  val fs2Version             = "3.11.0"
+  val fs2Version             = "3.12.2"
 
   // Libraries
   lazy val cats       = "org.typelevel" %% "cats-core"   % catsVersion
