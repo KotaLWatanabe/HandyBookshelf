@@ -10,7 +10,7 @@ trait GenUtils:
         case Some(value) => value
         case None        => throw new IllegalStateException(s"Failed to generate sample from generator")
 
-    def sampleStream(count: Int): List[A] = 
+    def sampleStream(count: Int): List[A] =
       Gen.listOfN(count, gen).sampleOne
 
   given [A] => Conversion[A, Gen[A]]:

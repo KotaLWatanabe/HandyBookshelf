@@ -19,45 +19,49 @@ trait DynamoDBRepository[F[_]] {
 }
 
 class DynamoDBRepositoryImpl(
-  client: AwsDynamoDbClient,
-  tableName: String = "HandyBookshelf"
+    client: AwsDynamoDbClient,
+    tableName: String = "HandyBookshelf"
 ) extends DynamoDBRepository[IO] {
 
-  def createTableIfNotExists(): IO[Unit] = 
+  def createTableIfNotExists(): IO[Unit] =
     IO.delay {
       try {
         client.describeTable(DescribeTableRequest.builder().tableName(tableName).build())
       } catch {
         case _: ResourceNotFoundException =>
-          val request = CreateTableRequest.builder()
+          val request = CreateTableRequest
+            .builder()
             .tableName(tableName)
             .keySchema(
-              KeySchemaElement.builder()
+              KeySchemaElement
+                .builder()
                 .attributeName("id")
                 .keyType(KeyType.HASH)
                 .build()
             )
             .attributeDefinitions(
-              AttributeDefinition.builder()
+              AttributeDefinition
+                .builder()
                 .attributeName("id")
                 .attributeType(ScalarAttributeType.S)
                 .build()
             )
             .billingMode(BillingMode.PAY_PER_REQUEST)
             .build()
-          
+
           client.createTable(request)
       }
     }.void
 
-  def put(key: String, value: Json): IO[Unit] = 
+  def put(key: String, value: Json): IO[Unit] =
     IO.delay {
       val item = Map(
-        "id" -> AttributeValue.builder().s(key).build(),
+        "id"   -> AttributeValue.builder().s(key).build(),
         "data" -> AttributeValue.builder().s(value.noSpaces).build()
       ).asJava
 
-      val request = PutItemRequest.builder()
+      val request = PutItemRequest
+        .builder()
         .tableName(tableName)
         .item(item)
         .build()
@@ -65,19 +69,20 @@ class DynamoDBRepositoryImpl(
       client.putItem(request)
     }.void
 
-  def get(key: String): IO[Option[Json]] = 
+  def get(key: String): IO[Option[Json]] =
     IO.delay {
       val keyMap = Map(
         "id" -> AttributeValue.builder().s(key).build()
       ).asJava
 
-      val request = GetItemRequest.builder()
+      val request = GetItemRequest
+        .builder()
         .tableName(tableName)
         .key(keyMap)
         .build()
 
       val response = client.getItem(request)
-      
+
       if (response.hasItem) {
         val dataAttr = response.item().get("data")
         if (dataAttr != null) {
@@ -86,13 +91,14 @@ class DynamoDBRepositoryImpl(
       } else None
     }
 
-  def delete(key: String): IO[Unit] = 
+  def delete(key: String): IO[Unit] =
     IO.delay {
       val keyMap = Map(
         "id" -> AttributeValue.builder().s(key).build()
       ).asJava
 
-      val request = DeleteItemRequest.builder()
+      val request = DeleteItemRequest
+        .builder()
         .tableName(tableName)
         .key(keyMap)
         .build()
@@ -100,18 +106,19 @@ class DynamoDBRepositoryImpl(
       client.deleteItem(request)
     }.void
 
-  def scan(): IO[List[(String, Json)]] = 
+  def scan(): IO[List[(String, Json)]] =
     IO.delay {
-      val request = ScanRequest.builder()
+      val request = ScanRequest
+        .builder()
         .tableName(tableName)
         .build()
 
       val response = client.scan(request)
-      
+
       response.items().asScala.toList.flatMap { item =>
-        val id = Option(item.get("id")).map(_.s())
+        val id   = Option(item.get("id")).map(_.s())
         val data = Option(item.get("data")).flatMap(attr => parser.parse(attr.s()).toOption)
-        
+
         (id, data).tupled
       }
     }
@@ -126,20 +133,23 @@ trait BookDynamoDBRepository[F[_]] {
 }
 
 class BookDynamoDBRepositoryImpl(
-  underlying: DynamoDBRepository[IO]
-)(using encoder: Codec[Book]) extends BookDynamoDBRepository[IO] {
+    underlying: DynamoDBRepository[IO]
+)(using encoder: Codec[Book])
+    extends BookDynamoDBRepository[IO] {
 
-  def saveBook(book: Book): IO[Unit] = 
+  def saveBook(book: Book): IO[Unit] =
     underlying.put(book.id.toString, book.asJson)
 
-  def getBook(bookId: BookId): IO[Option[Book]] = 
+  def getBook(bookId: BookId): IO[Option[Book]] =
     underlying.get(bookId.toString).map(_.flatMap(_.as[Book].toOption))
 
-  def deleteBook(bookId: BookId): IO[Unit] = 
+  def deleteBook(bookId: BookId): IO[Unit] =
     underlying.delete(bookId.toString)
 
-  def listBooks(): IO[List[Book]] = 
-    underlying.scan().map(_.flatMap { case (_, json) =>
-      json.as[Book].toOption
-    })
+  def listBooks(): IO[List[Book]] =
+    underlying
+      .scan()
+      .map(_.flatMap { case (_, json) =>
+        json.as[Book].toOption
+      })
 }

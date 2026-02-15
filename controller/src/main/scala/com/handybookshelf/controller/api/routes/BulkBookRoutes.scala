@@ -27,7 +27,7 @@ class BulkBookRoutes[F[_]: Async](
       enableExternalSearch = request.enableExternalSearch,
       maxConcurrency = request.maxConcurrency.getOrElse(5)
     )
-    
+
     bulkRegisterBookUseCase.execute(command).map {
       case Left(error) =>
         val errorResponse = error match {
@@ -58,7 +58,8 @@ class BulkBookRoutes[F[_]: Async](
   ): F[Either[BulkRegistrationError, String]] =
     try {
       // Server-Sent Events形式でストリームを生成
-      val progressStream = bulkRegisterBookUseCase.getProgressUpdates(requestId)
+      val progressStream = bulkRegisterBookUseCase
+        .getProgressUpdates(requestId)
         .map { update =>
           val json = update.asJson.noSpaces
           s"data: $json\n\n"
@@ -67,24 +68,32 @@ class BulkBookRoutes[F[_]: Async](
           Stream.emit(s"event: error\ndata: ${throwable.getMessage}\n\n")
         }
         .append(Stream.emit("event: end\ndata: stream completed\n\n"))
-      
+
       // ストリームを文字列に変換（実際のSSE実装では、このアプローチではなく、
       // HTTP4sのStreamingレスポンスを使用すべき）
       progressStream.compile.string.map(Right(_))
-      
+
     } catch {
       case e: IllegalArgumentException =>
-        Async[F].pure(Left(BulkRegistrationError(
-          error = "REQUEST_NOT_FOUND",
-          details = Some(e.getMessage),
-          requestId = Some(requestId)
-        )))
+        Async[F].pure(
+          Left(
+            BulkRegistrationError(
+              error = "REQUEST_NOT_FOUND",
+              details = Some(e.getMessage),
+              requestId = Some(requestId)
+            )
+          )
+        )
       case e: Exception =>
-        Async[F].pure(Left(BulkRegistrationError(
-          error = "INTERNAL_ERROR",
-          details = Some(e.getMessage),
-          requestId = Some(requestId)
-        )))
+        Async[F].pure(
+          Left(
+            BulkRegistrationError(
+              error = "INTERNAL_ERROR",
+              details = Some(e.getMessage),
+              requestId = Some(requestId)
+            )
+          )
+        )
     }
 
   private def handleGetBulkRegistrationResult(
@@ -92,16 +101,19 @@ class BulkBookRoutes[F[_]: Async](
   ): F[Either[BulkRegistrationError, BulkRegistrationResult]] =
     bulkRegisterBookUseCase.getFinalResult(requestId).map {
       case Some(result) => Right(result)
-      case None => Left(BulkRegistrationError(
-        error = "REQUEST_NOT_FOUND",
-        details = Some(s"No result found for request ID: $requestId"),
-        requestId = Some(requestId)
-      ))
+      case None =>
+        Left(
+          BulkRegistrationError(
+            error = "REQUEST_NOT_FOUND",
+            details = Some(s"No result found for request ID: $requestId"),
+            requestId = Some(requestId)
+          )
+        )
     }
 
   val routes: HttpRoutes[F] = {
     val interpreter = Http4sServerInterpreter[F]()
-    
+
     interpreter.toRoutes(startBulkRegistration.serverLogic(handleStartBulkRegistration)) <+>
       interpreter.toRoutes(getBulkRegistrationProgress.serverLogic(handleGetBulkRegistrationProgress)) <+>
       interpreter.toRoutes(getBulkRegistrationResult.serverLogic(handleGetBulkRegistrationResult))
@@ -137,6 +149,6 @@ object ServerSentEvents:
         .flatMap(bytes => Stream.emits(bytes))
     )
 
-  def formatData(data: String): String = s"data: $data\n\n"
+  def formatData(data: String): String                 = s"data: $data\n\n"
   def formatEvent(event: String, data: String): String = s"event: $event\ndata: $data\n\n"
-  def keepAlive: String = ": keep-alive\n\n"
+  def keepAlive: String                                = ": keep-alive\n\n"

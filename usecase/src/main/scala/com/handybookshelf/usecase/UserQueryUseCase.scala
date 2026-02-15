@@ -38,7 +38,7 @@ class UserQueryUseCase(
   def getUserState(request: GetUserStateRequest): UsecaseEff[QueryResult[UserStateResponse]] =
     for {
       userAccountId <- parseUserAccountId(request.userAccountId)
-      queryResult <- fromIOUsecase(userStateRepository.getUserState(userAccountId))
+      queryResult   <- fromIOUsecase(userStateRepository.getUserState(userAccountId))
       response = queryResult.state.map(stateToResponse)
       _ <- logInfo(s"User state query executed for: ${request.userAccountId}")
     } yield QueryResult(
@@ -72,7 +72,7 @@ class UserQueryUseCase(
   def getRepositoryHealth(): UsecaseEff[QueryResult[Boolean]] =
     for {
       isHealthy <- fromIOUsecase(userStateRepository.isHealthy())
-      _ <- logInfo(s"Repository health check executed: $isHealthy")
+      _         <- logInfo(s"Repository health check executed: $isHealthy")
     } yield QueryResult(
       success = true,
       data = Some(isHealthy),

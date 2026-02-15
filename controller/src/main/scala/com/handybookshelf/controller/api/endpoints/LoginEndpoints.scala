@@ -1,4 +1,4 @@
-package com.handybookshelf 
+package com.handybookshelf
 package controller.api
 package endpoints
 
@@ -16,23 +16,23 @@ final case class LogoutResponse(success: Boolean, message: String)
 final case class UserStatusResponse(userAccountId: String, isLoggedIn: Boolean)
 
 // Circe codecs
-given Schema[LoginRequest] = Schema.derived
+given Schema[LoginRequest]  = Schema.derived
 given Decoder[LoginRequest] = deriveDecoder[LoginRequest]
 given Encoder[LoginRequest] = deriveEncoder[LoginRequest]
 
-given Schema[LoginResponse] = Schema.derived
+given Schema[LoginResponse]  = Schema.derived
 given Decoder[LoginResponse] = deriveDecoder[LoginResponse]
 given Encoder[LoginResponse] = deriveEncoder[LoginResponse]
 
-given Schema[LogoutRequest] = Schema.derived
+given Schema[LogoutRequest]  = Schema.derived
 given Decoder[LogoutRequest] = deriveDecoder[LogoutRequest]
 given Encoder[LogoutRequest] = deriveEncoder[LogoutRequest]
 
-given Schema[LogoutResponse] = Schema.derived
+given Schema[LogoutResponse]  = Schema.derived
 given Decoder[LogoutResponse] = deriveDecoder[LogoutResponse]
 given Encoder[LogoutResponse] = deriveEncoder[LogoutResponse]
 
-given Schema[UserStatusResponse] = Schema.derived
+given Schema[UserStatusResponse]  = Schema.derived
 given Decoder[UserStatusResponse] = deriveDecoder[UserStatusResponse]
 given Encoder[UserStatusResponse] = deriveEncoder[UserStatusResponse]
 
