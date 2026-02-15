@@ -24,7 +24,7 @@ object Libraries {
   lazy val catsEffect = "org.typelevel" %% "cats-effect" % catsEffectVersion
   lazy val scalaTest =
     "org.scalatest" %% "scalatest" % scalaTestVersion % Test
-  lazy val scalaCheck = "org.scalacheck" %% "scalacheck" % "1.18.1" % Test
+  lazy val scalaCheck = "org.scalacheck" %% "scalacheck" % "1.19.0" % Test
   lazy val scalaTestCheck =
     "org.scalatestplus" %% "scalacheck-1-17" % "3.2.18.0" % Test
   lazy val http4s: Seq[ModuleID] = Seq(
