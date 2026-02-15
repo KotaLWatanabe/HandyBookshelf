@@ -57,7 +57,7 @@ object Libraries {
     "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-bundle" % tapirVersion
   )
   lazy val sttp: Seq[ModuleID] = Seq(
-    "com.softwaremill.sttp.apispec" %% "openapi-circe-yaml" % "0.11.9"
+    "com.softwaremill.sttp.apispec" %% "openapi-circe-yaml" % "0.11.10"
   )
   lazy val atnosEff        = "org.atnos" %% "eff"             % atnosEffVersion
   lazy val atnosEffCatsEff = "org.atnos" %% "eff-cats-effect" % atnosEffVersion
