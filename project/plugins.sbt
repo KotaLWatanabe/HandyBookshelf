@@ -1,4 +1,4 @@
-addSbtPlugin("org.typelevel" % "sbt-tpolecat" % "0.5.2")
+addSbtPlugin("org.typelevel" % "sbt-tpolecat" % "0.5.3")
 
 addSbtPlugin("io.spray" % "sbt-revolver" % "0.10.0")
 
