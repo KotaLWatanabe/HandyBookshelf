@@ -34,9 +34,7 @@ object Book:
     )
 
   def generateWithIdentifier[R: _eval](identifier: BookIdentifier, title: NES): Eff[R, Book] =
-    TimestampGenerator.now.map(timestamp =>
-      Book(BookId.generate(timestamp), title, Some(identifier))
-    )
+    TimestampGenerator.now.map(timestamp => Book(BookId.generate(timestamp), title, Some(identifier)))
 
 final case class BookReference(book: Book, tags: Seq[Tag], devices: NonEmptyList[Device]) {
   val bookId: BookId = book.id
@@ -52,9 +50,7 @@ object Device:
   // Circe codecs for Device
   given Encoder[Device] = Encoder.encodeString.contramap(_.toString)
   given Decoder[Device] = Decoder.decodeString.emap: s =>
-    scala.util.Try(Device.valueOf(s))
-      .toEither
-      .left.map(_ => s"Unknown device type: $s")
+    scala.util.Try(Device.valueOf(s)).toEither.left.map(_ => s"Unknown device type: $s")
 
 final case class Tag(name: NES)
 

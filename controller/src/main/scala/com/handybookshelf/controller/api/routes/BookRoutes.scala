@@ -21,7 +21,7 @@ class BookRoutes[F[_]: Async](
       isbn = request.isbn,
       title = request.title
     )
-    
+
     registerBookUseCase.execute(command).flatMap {
       case Left(error) =>
         val errorResponse = error match {

@@ -5,14 +5,13 @@ import cats.data.Writer
 import cats.effect.IO
 import org.atnos.eff.{<=, Fx, |=}
 
-
 object EffectStack {
 
   case class UseCaseConfig(
       timeout: Long,
       retryCount: Int
   )
-  
+
   // Simplified effect type for compilation
   type UseCaseOperation[A] = IO[Either[String, A]]
 

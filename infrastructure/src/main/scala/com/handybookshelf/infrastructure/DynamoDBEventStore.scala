@@ -14,19 +14,25 @@ import java.time.Instant
 import scala.jdk.CollectionConverters.*
 
 /**
- * DynamoDB implementation of EventStore for event sourcing 
- * Provides persistent storage for domain events with optimized read/write patterns
+ * DynamoDB implementation of EventStore for event sourcing Provides persistent storage for domain events with optimized
+ * read/write patterns
  */
-class DynamoDBEventStore(client: DynamoDbClient, tableName: String = "event_store")(using Encoder[DomainEvent], Codec[StreamMetadata]) extends EventStore:
+class DynamoDBEventStore(client: DynamoDbClient, tableName: String = "event_store")(using
+    Encoder[DomainEvent],
+    Codec[StreamMetadata]
+) extends EventStore:
 
   override def getEvents(streamId: StreamId): IO[List[StoredEvent]] =
     IO {
-      val request = QueryRequest.builder()
+      val request = QueryRequest
+        .builder()
         .tableName(tableName)
         .keyConditionExpression("persistence_id = :streamId")
-        .expressionAttributeValues(Map(
-          ":streamId" -> AttributeValue.builder().s(streamId.value).build()
-        ).asJava)
+        .expressionAttributeValues(
+          Map(
+            ":streamId" -> AttributeValue.builder().s(streamId.value).build()
+          ).asJava
+        )
         .build()
 
       val response = client.query(request)
@@ -38,13 +44,16 @@ class DynamoDBEventStore(client: DynamoDbClient, tableName: String = "event_stor
       fromVersion: EventVersion
   ): IO[List[StoredEvent]] =
     IO {
-      val request = QueryRequest.builder()
+      val request = QueryRequest
+        .builder()
         .tableName(tableName)
         .keyConditionExpression("persistence_id = :streamId AND sequence_nr >= :fromVersion")
-        .expressionAttributeValues(Map(
-          ":streamId" -> AttributeValue.builder().s(streamId.value).build(),
-          ":fromVersion" -> AttributeValue.builder().n(fromVersion.value.toString).build()
-        ).asJava)
+        .expressionAttributeValues(
+          Map(
+            ":streamId"    -> AttributeValue.builder().s(streamId.value).build(),
+            ":fromVersion" -> AttributeValue.builder().n(fromVersion.value.toString).build()
+          ).asJava
+        )
         .build()
 
       val response = client.query(request)
@@ -75,12 +84,15 @@ class DynamoDBEventStore(client: DynamoDbClient, tableName: String = "event_stor
 
   private def getLatestSequenceNumber(streamId: StreamId): IO[Option[Long]] =
     IO {
-      val request = QueryRequest.builder()
+      val request = QueryRequest
+        .builder()
         .tableName(tableName)
         .keyConditionExpression("persistence_id = :streamId")
-        .expressionAttributeValues(Map(
-          ":streamId" -> AttributeValue.builder().s(streamId.value).build()
-        ).asJava)
+        .expressionAttributeValues(
+          Map(
+            ":streamId" -> AttributeValue.builder().s(streamId.value).build()
+          ).asJava
+        )
         .scanIndexForward(false) // Descending order
         .limit(1)
         .build()
@@ -98,7 +110,7 @@ class DynamoDBEventStore(client: DynamoDbClient, tableName: String = "event_stor
   )(using Encoder[DomainEvent]): IO[Unit] =
     IO {
       val startSeq = currentVersion.getOrElse(0L) + 1
-      
+
       events.zipWithIndex.foreach { case (event, index) =>
         val sequenceNr   = startSeq + index
         val eventJson    = event.event.asInstanceOf[DomainEvent].asJson.noSpaces
@@ -106,15 +118,16 @@ class DynamoDBEventStore(client: DynamoDbClient, tableName: String = "event_stor
         val timestamp    = Instant.now()
 
         val item = Map(
-          "persistence_id" -> AttributeValue.builder().s(streamId.value).build(),
-          "sequence_nr" -> AttributeValue.builder().n(sequenceNr.toString).build(),
+          "persistence_id"  -> AttributeValue.builder().s(streamId.value).build(),
+          "sequence_nr"     -> AttributeValue.builder().n(sequenceNr.toString).build(),
           "event_timestamp" -> AttributeValue.builder().s(timestamp.toString).build(),
-          "event_type" -> AttributeValue.builder().s(event.event.getClass.getSimpleName).build(),
-          "event_data" -> AttributeValue.builder().s(eventJson).build(),
-          "metadata" -> AttributeValue.builder().s(metadataJson).build()
+          "event_type"      -> AttributeValue.builder().s(event.event.getClass.getSimpleName).build(),
+          "event_data"      -> AttributeValue.builder().s(eventJson).build(),
+          "metadata"        -> AttributeValue.builder().s(metadataJson).build()
         ).asJava
 
-        val request = PutItemRequest.builder()
+        val request = PutItemRequest
+          .builder()
           .tableName(tableName)
           .item(item)
           .build()
@@ -165,7 +178,6 @@ class DynamoDBEventStore(client: DynamoDbClient, tableName: String = "event_stor
             )
           )
 
-
 /**
  * Repository implementations using DynamoDB
  */
@@ -181,15 +193,16 @@ class DynamoDBUserSessionRepository(client: DynamoDbClient, tableName: String = 
       val now = Instant.now()
       val item = Map(
         "user_account_id" -> AttributeValue.builder().s(userAccountId).build(),
-        "session_id" -> AttributeValue.builder().s(sessionId).build(),
-        "created_at" -> AttributeValue.builder().s(now.toString).build(),
-        "last_activity" -> AttributeValue.builder().s(now.toString).build(),
-        "expires_at" -> AttributeValue.builder().s(expiresAt.toString).build(),
-        "is_active" -> AttributeValue.builder().bool(true).build(),
-        "metadata" -> AttributeValue.builder().s(metadata).build()
+        "session_id"      -> AttributeValue.builder().s(sessionId).build(),
+        "created_at"      -> AttributeValue.builder().s(now.toString).build(),
+        "last_activity"   -> AttributeValue.builder().s(now.toString).build(),
+        "expires_at"      -> AttributeValue.builder().s(expiresAt.toString).build(),
+        "is_active"       -> AttributeValue.builder().bool(true).build(),
+        "metadata"        -> AttributeValue.builder().s(metadata).build()
       ).asJava
 
-      val request = PutItemRequest.builder()
+      val request = PutItemRequest
+        .builder()
         .tableName(tableName)
         .item(item)
         .build()
@@ -201,19 +214,20 @@ class DynamoDBUserSessionRepository(client: DynamoDbClient, tableName: String = 
     IO {
       val key = Map(
         "user_account_id" -> AttributeValue.builder().s(userAccountId).build(),
-        "session_id" -> AttributeValue.builder().s(sessionId).build()
+        "session_id"      -> AttributeValue.builder().s(sessionId).build()
       ).asJava
 
-      val request = GetItemRequest.builder()
+      val request = GetItemRequest
+        .builder()
         .tableName(tableName)
         .key(key)
         .build()
 
       val response = client.getItem(request)
-      
+
       if response.hasItem then
-        val item = response.item()
-        val isActive = item.get("is_active").bool()
+        val item      = response.item()
+        val isActive  = item.get("is_active").bool()
         val expiresAt = Instant.parse(item.get("expires_at").s())
         isActive && expiresAt.isAfter(Instant.now())
       else false
@@ -224,21 +238,24 @@ class DynamoDBUserSessionRepository(client: DynamoDbClient, tableName: String = 
       val now = Instant.now()
       val key = Map(
         "user_account_id" -> AttributeValue.builder().s(userAccountId).build(),
-        "session_id" -> AttributeValue.builder().s(sessionId).build()
+        "session_id"      -> AttributeValue.builder().s(sessionId).build()
       ).asJava
 
       val updates = Map(
-        "last_activity" -> AttributeValueUpdate.builder()
+        "last_activity" -> AttributeValueUpdate
+          .builder()
           .value(AttributeValue.builder().s(now.toString).build())
           .action(AttributeAction.PUT)
           .build(),
-        "expires_at" -> AttributeValueUpdate.builder()
+        "expires_at" -> AttributeValueUpdate
+          .builder()
           .value(AttributeValue.builder().s(newExpiresAt.toString).build())
           .action(AttributeAction.PUT)
           .build()
       ).asJava
 
-      val request = UpdateItemRequest.builder()
+      val request = UpdateItemRequest
+        .builder()
         .tableName(tableName)
         .key(key)
         .attributeUpdates(updates)
@@ -251,17 +268,19 @@ class DynamoDBUserSessionRepository(client: DynamoDbClient, tableName: String = 
     IO {
       val key = Map(
         "user_account_id" -> AttributeValue.builder().s(userAccountId).build(),
-        "session_id" -> AttributeValue.builder().s(sessionId).build()
+        "session_id"      -> AttributeValue.builder().s(sessionId).build()
       ).asJava
 
       val updates = Map(
-        "is_active" -> AttributeValueUpdate.builder()
+        "is_active" -> AttributeValueUpdate
+          .builder()
           .value(AttributeValue.builder().bool(false).build())
           .action(AttributeAction.PUT)
           .build()
       ).asJava
 
-      val request = UpdateItemRequest.builder()
+      val request = UpdateItemRequest
+        .builder()
         .tableName(tableName)
         .key(key)
         .attributeUpdates(updates)

@@ -70,9 +70,9 @@ class ISBNConverterSpec extends PropertyBasedTestHelpers:
       }
 
       it("should return None for invalid input") {
-        assert(ISBNConverter.convertISBN10to13("123").isEmpty)           // too short
-        assert(ISBNConverter.convertISBN10to13("12345678901").isEmpty)   // too long
-        assert(ISBNConverter.convertISBN10to13("abcdefghij").isEmpty)    // non-digits
+        assert(ISBNConverter.convertISBN10to13("123").isEmpty)         // too short
+        assert(ISBNConverter.convertISBN10to13("12345678901").isEmpty) // too long
+        assert(ISBNConverter.convertISBN10to13("abcdefghij").isEmpty)  // non-digits
       }
 
       checkProperty("should always produce 13-digit result for valid 10-digit input") {
@@ -108,7 +108,7 @@ class ISBNConverterSpec extends PropertyBasedTestHelpers:
       }
 
       it("should return None for invalid input") {
-        assert(ISBNConverter.convertISBN13to10("123").isEmpty)           // too short
+        assert(ISBNConverter.convertISBN13to10("123").isEmpty)            // too short
         assert(ISBNConverter.convertISBN13to10("12345678901234").isEmpty) // too long
         assert(ISBNConverter.convertISBN13to10("abcdefghijklm").isEmpty)  // non-digits
       }
@@ -130,13 +130,13 @@ class ISBNConverterSpec extends PropertyBasedTestHelpers:
 
       it("should reject invalid check digits") {
         // 最後の桁を変更して不正なチェックディジットにする
-        assert(!ISBNConverter.validate("4873115656")) // 正しくは 4873115655
+        assert(!ISBNConverter.validate("4873115656"))    // 正しくは 4873115655
         assert(!ISBNConverter.validate("9784873115659")) // 正しくは 9784873115658
       }
 
       it("should reject invalid lengths") {
-        assert(!ISBNConverter.validate("123456789"))   // 9 digits
-        assert(!ISBNConverter.validate("12345678901")) // 11 digits
+        assert(!ISBNConverter.validate("123456789"))    // 9 digits
+        assert(!ISBNConverter.validate("12345678901"))  // 11 digits
         assert(!ISBNConverter.validate("123456789012")) // 12 digits
       }
     }
@@ -152,8 +152,8 @@ class ISBNConverterSpec extends PropertyBasedTestHelpers:
         if (checkDigit != 'X') {
           val isbn10 = isbn9 + checkDigit
           val result = for {
-            isbn13     <- ISBNConverter.convertISBN10to13(isbn10)
-            backTo10   <- ISBNConverter.convertISBN13to10(isbn13)
+            isbn13   <- ISBNConverter.convertISBN10to13(isbn10)
+            backTo10 <- ISBNConverter.convertISBN13to10(isbn13)
           } yield backTo10.toString
           result shouldBe Some(isbn10)
         } else {
@@ -272,8 +272,8 @@ class ISBNConverterSpec extends PropertyBasedTestHelpers:
     }
 
     it("should return false for different books") {
-      val isbn1 = toISBN("4873115655")   // リーダブルコード
-      val isbn2 = toISBN("4873117526")   // プログラミングRust
+      val isbn1 = toISBN("4873115655") // リーダブルコード
+      val isbn2 = toISBN("4873117526") // プログラミングRust
 
       ISBNConverter.isSameBook(isbn1, isbn2) shouldBe false
     }

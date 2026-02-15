@@ -103,7 +103,8 @@ object BookshelfActor:
 
   // JSON codecs for persistence
   given userAccountIdEncoder: Encoder[UserAccountId] = Encoder.encodeString.contramap(_.breachEncapsulationIdAsString)
-  given userAccountIdDecoder: Decoder[UserAccountId] = Decoder.decodeString.map(s => UserAccountId.create(wvlet.airframe.ulid.ULID.fromString(s)))
+  given userAccountIdDecoder: Decoder[UserAccountId] =
+    Decoder.decodeString.map(s => UserAccountId.create(wvlet.airframe.ulid.ULID.fromString(s)))
   // TODO: Add codecs for BookReference, Bookshelf, etc.
   // given Encoder[BookshelfEvent] = deriveEncoder
   // given Decoder[BookshelfEvent] = deriveDecoder

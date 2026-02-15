@@ -15,5 +15,5 @@ final case class DuplicateBookError(identifier: BookIdentifier, existingBookId: 
 
 /** 識別子が不正な形式の場合のエラー */
 final case class InvalidIdentifierError(identifierType: String, value: String, reason: String) extends DomainError:
-  def message: String = s"Invalid $identifierType: '$value' - $reason"
+  def message: String          = s"Invalid $identifierType: '$value' - $reason"
   def cause: Option[Throwable] = None

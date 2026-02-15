@@ -7,10 +7,11 @@ import com.handybookshelf.domain.*
 import com.handybookshelf.domain.repositories.BookRepository
 import com.handybookshelf.util.{ISBN, Timestamp}
 
-/** BookRepositoryImpl - BookRepositoryの実装
-  *
-  * EventStoreを使用してBookAggregateのイベント履歴を永続化・復元する。 IdentifierIndexを使用して識別子からBookIdへの高速ルックアップを提供。
-  */
+/**
+ * BookRepositoryImpl - BookRepositoryの実装
+ *
+ * EventStoreを使用してBookAggregateのイベント履歴を永続化・復元する。 IdentifierIndexを使用して識別子からBookIdへの高速ルックアップを提供。
+ */
 class BookRepositoryImpl(
     eventStore: EventStore,
     identifierIndex: IdentifierIndex
@@ -56,9 +57,11 @@ class BookRepositoryImpl(
     eventStore.streamExists(StreamId(aggregateId))
 
   override def getVersion(aggregateId: String): IO[Option[domain.EventVersion]] =
-    eventStore.getStreamMetadata(StreamId(aggregateId)).map(_.map { meta =>
-      domain.EventVersion(meta.version.value)
-    })
+    eventStore
+      .getStreamMetadata(StreamId(aggregateId))
+      .map(_.map { meta =>
+        domain.EventVersion(meta.version.value)
+      })
 
   override def getEventsFromVersion(
       aggregateId: String,

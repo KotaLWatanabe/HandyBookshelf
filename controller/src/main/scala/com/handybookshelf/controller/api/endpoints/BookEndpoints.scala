@@ -24,11 +24,11 @@ final case class BookRegistrationError(
 )
 
 object BookEndpoints {
-  
-  given Encoder[RegisterBookRequest] = deriveEncoder
-  given Decoder[RegisterBookRequest] = deriveDecoder
-  given Encoder[RegisterBookResponse] = deriveEncoder
-  given Decoder[RegisterBookResponse] = deriveDecoder
+
+  given Encoder[RegisterBookRequest]   = deriveEncoder
+  given Decoder[RegisterBookRequest]   = deriveDecoder
+  given Encoder[RegisterBookResponse]  = deriveEncoder
+  given Decoder[RegisterBookResponse]  = deriveDecoder
   given Encoder[BookRegistrationError] = deriveEncoder
   given Decoder[BookRegistrationError] = deriveDecoder
 

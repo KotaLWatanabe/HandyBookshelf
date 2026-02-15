@@ -37,56 +37,66 @@ class LoginRoutes[F[_]: Async](sessionService: SessionService):
     val userIdGeneration: Eff[EffStack, UserAccountId] = UserAccountId.generate
 
     val userId = runULIDGen(userIdGeneration)
-    
+
     for {
       // Use the session service directly
-      response <-  sessionService.login(userId).unsafeToFuture()
-      
-      result = if response.success then
-        Right(LoginResponse(
-          success = true,
-          message = response.message,
-          userAccountId = request.userAccountId
-        ))
-      else
-        Left(response.message)
+      response <- sessionService.login(userId).unsafeToFuture()
+
+      result =
+        if response.success then
+          Right(
+            LoginResponse(
+              success = true,
+              message = response.message,
+              userAccountId = request.userAccountId
+            )
+          )
+        else Left(response.message)
     } yield result
 
   private def handleLogout(request: LogoutRequest): F[Either[String, LogoutResponse]] =
     // Parse userAccountId from request - in real implementation this would come from session/token
     val userIdGeneration: Eff[EffStack, UserAccountId] = UserAccountId.generate
-    
+
     val userId = runULIDGen(userIdGeneration)
-    
+
     for {
-      response <- MonadCancelThrow[F].fromFuture(MonadCancelThrow[F].pure(
-        sessionService.logout(userId).unsafeToFuture()
-      ))
-      
-      result = if response.success then
-        Right(LogoutResponse(
-          success = true,
-          message = response.message
-        ))
-      else
-        Left(response.message)
+      response <- MonadCancelThrow[F].fromFuture(
+        MonadCancelThrow[F].pure(
+          sessionService.logout(userId).unsafeToFuture()
+        )
+      )
+
+      result =
+        if response.success then
+          Right(
+            LogoutResponse(
+              success = true,
+              message = response.message
+            )
+          )
+        else Left(response.message)
     } yield result
 
   private def handleStatus(userAccountId: String): F[Either[String, UserStatusResponse]] =
     // Parse userAccountId from string - in real implementation this would be proper parsing
     val userIdGeneration: Eff[EffStack, UserAccountId] = UserAccountId.generate
-    
+
     val userId = runULIDGen(userIdGeneration)
-    
+
     for {
-      response <- MonadCancelThrow[F].fromFuture(MonadCancelThrow[F].pure(
-        sessionService.getUserStatus(userId).unsafeToFuture()
-      ))
-      
-      result = Right(UserStatusResponse(
-        userAccountId = userAccountId,
-        isLoggedIn = response.isLoggedIn
-      ))
+      response <- MonadCancelThrow[F].fromFuture(
+        MonadCancelThrow[F].pure(
+          sessionService.getUserStatus(userId).unsafeToFuture()
+        )
+      )
+
+      result = Right(
+        UserStatusResponse(
+          userAccountId = userAccountId,
+          isLoggedIn = response.isLoggedIn
+        )
+      )
     } yield result
 
   val routes: HttpRoutes[F] = {
