@@ -48,67 +48,81 @@ class KokkaiToshokanSearchService(client: Client[IO]) extends BookSearchService:
             publisher = bookData.publisher.orElse(bestMatch.publisher),
             publishedYear = bookData.publishedYear.orElse(bestMatch.publishedYear)
           )
-          IO.pure(BookSearchResult(
-            originalData = bookData,
-            enrichedData = Some(enriched),
-            searchSuccess = true
-          ))
+          IO.pure(
+            BookSearchResult(
+              originalData = bookData,
+              enrichedData = Some(enriched),
+              searchSuccess = true
+            )
+          )
         case Right(_) =>
-          IO.pure(BookSearchResult(
-            originalData = bookData,
-            searchSuccess = false,
-            error = Some("No search results found")
-          ))
+          IO.pure(
+            BookSearchResult(
+              originalData = bookData,
+              searchSuccess = false,
+              error = Some("No search results found")
+            )
+          )
         case Left(error) =>
-          IO.pure(BookSearchResult(
-            originalData = bookData,
-            searchSuccess = false,
-            error = Some(error.message)
-          ))
+          IO.pure(
+            BookSearchResult(
+              originalData = bookData,
+              searchSuccess = false,
+              error = Some(error.message)
+            )
+          )
       }
     } yield enrichedData).handleErrorWith { throwable =>
-      IO.pure(BookSearchResult(
-        originalData = bookData,
-        searchSuccess = false,
-        error = Some(s"Search failed: ${throwable.getMessage}")
-      ))
+      IO.pure(
+        BookSearchResult(
+          originalData = bookData,
+          searchSuccess = false,
+          error = Some(s"Search failed: ${throwable.getMessage}")
+        )
+      )
     }
 
   override def searchByTitle(title: String): IO[Either[SearchError, List[BookData]]] =
-    client.expect[String](searchAPIURL(title)).map { xmlStr =>
-      for {
-        xml <- Try(XML.loadString(xmlStr)).toEither
-          .leftMap(e => SearchError(s"XML parsing failed: ${e.getMessage}", Some(e)))
-        books = xmlToBookData(xml)
-      } yield books
-    }.handleErrorWith { throwable =>
-      IO.pure(Left(SearchError(s"HTTP request failed: ${throwable.getMessage}", Some(throwable))))
-    }
+    client
+      .expect[String](searchAPIURL(title))
+      .map { xmlStr =>
+        for {
+          xml <- Try(XML.loadString(xmlStr)).toEither
+            .leftMap(e => SearchError(s"XML parsing failed: ${e.getMessage}", Some(e)))
+          books = xmlToBookData(xml)
+        } yield books
+      }
+      .handleErrorWith { throwable =>
+        IO.pure(Left(SearchError(s"HTTP request failed: ${throwable.getMessage}", Some(throwable))))
+      }
 
   override def searchByISBN(isbn: String): IO[Either[SearchError, Option[BookData]]] =
     // 国会図書館APIはISBN検索もタイトル検索と同じエンドポイントを使用
     val searchUrl = uri"https://iss.ndl.go.jp/api/opensearch" ++? ("isbn", List(isbn))
-    
-    client.expect[String](searchUrl).map { xmlStr =>
-      for {
-        xml <- Try(XML.loadString(xmlStr)).toEither
-          .leftMap(e => SearchError(s"XML parsing failed: ${e.getMessage}", Some(e)))
-        books = xmlToBookData(xml)
-      } yield books.headOption
-    }.handleErrorWith { throwable =>
-      IO.pure(Left(SearchError(s"HTTP request failed: ${throwable.getMessage}", Some(throwable))))
-    }
+
+    client
+      .expect[String](searchUrl)
+      .map { xmlStr =>
+        for {
+          xml <- Try(XML.loadString(xmlStr)).toEither
+            .leftMap(e => SearchError(s"XML parsing failed: ${e.getMessage}", Some(e)))
+          books = xmlToBookData(xml)
+        } yield books.headOption
+      }
+      .handleErrorWith { throwable =>
+        IO.pure(Left(SearchError(s"HTTP request failed: ${throwable.getMessage}", Some(throwable))))
+      }
 
   private def xmlToBookData(elem: Elem): List[BookData] =
     (for {
-      item <- elem \\ "item"
+      item  <- elem \\ "item"
       title <- (item \ "title").headOption.map(_.text)
     } yield {
       val isbnOpt = isbnTagPattern
         .findFirstIn(item.toString)
         .map(isbnSubStr(_))
-        
-      val author = (item \ "creator").headOption.map(_.text)
+
+      val author    = (item \ "creator").headOption.map(_.text)
       val publisher = (item \ "publisher").headOption.map(_.text)
       val publishedYear = (item \ "date").headOption
         .map(_.text)
@@ -131,7 +145,7 @@ class CircuitBreakerBookSearchService(
 ) extends BookSearchService:
 
   // Circuit breaker methods temporarily commented out
-*/
+ */
 
 object BookSearchService:
   def kokkaiToshokan(client: Client[IO]): BookSearchService =
@@ -151,4 +165,4 @@ object BookSearchService:
       circuitBreaker = CircuitBreakerClient.create()
       searchService = kokkaiToshokan(client)
     } yield withCircuitBreaker(searchService, circuitBreaker)
-  */
+   */

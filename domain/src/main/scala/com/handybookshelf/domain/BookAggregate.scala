@@ -88,12 +88,16 @@ final case class BookAggregate(
 
   // ビジネスロジック - コマンドハンドリング
 
-  /** 書籍を登録する（BookIdentifier版）
-    *
-    * @param identifier 識別子（ISBN, arXiv ID, DOI, またはタイトル）
-    * @param title 書籍タイトル
-    * @return 更新されたBookAggregate
-    */
+  /**
+   * 書籍を登録する（BookIdentifier版）
+   *
+   * @param identifier
+   *   識別子（ISBN, arXiv ID, DOI, またはタイトル）
+   * @param title
+   *   書籍タイトル
+   * @return
+   *   更新されたBookAggregate
+   */
   def register(identifier: BookIdentifier, title: NES): IO[BookAggregate] =
     IO(Timestamp.now).map(timestamp =>
       val event = BookRegistered(
@@ -107,12 +111,16 @@ final case class BookAggregate(
       applyEvent(event)
     )
 
-  /** 書籍を登録する（後方互換性: ISBN版）
-    *
-    * @param isbn ISBN（オプション）
-    * @param title 書籍タイトル
-    * @return 更新されたBookAggregate
-    */
+  /**
+   * 書籍を登録する（後方互換性: ISBN版）
+   *
+   * @param isbn
+   *   ISBN（オプション）
+   * @param title
+   *   書籍タイトル
+   * @return
+   *   更新されたBookAggregate
+   */
   def registerWithISBN(isbn: Option[ISBN], title: NES): IO[BookAggregate] =
     val identifier = isbn match
       case Some(i) => BookIdentifier.ISBN(i)

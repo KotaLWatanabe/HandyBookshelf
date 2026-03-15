@@ -11,7 +11,8 @@ object DynamoDBClient {
   def createLocalClient(): Resource[IO, AwsDynamoDbClient] =
     Resource.make(
       IO.delay {
-        AwsDynamoDbClient.builder()
+        AwsDynamoDbClient
+          .builder()
           .endpointOverride(URI.create("http://localhost:8000"))
           .region(Region.US_EAST_1)
           .credentialsProvider(
@@ -26,9 +27,10 @@ object DynamoDBClient {
   def createClient(endpoint: URI, region: Region = Region.US_EAST_1): Resource[IO, AwsDynamoDbClient] =
     Resource.make(
       IO.delay {
-        val builder = AwsDynamoDbClient.builder()
+        val builder = AwsDynamoDbClient
+          .builder()
           .region(region)
-        
+
         // For local development, override endpoint and use dummy credentials
         val _ = if (endpoint.getHost == "localhost") {
           builder
@@ -39,7 +41,7 @@ object DynamoDBClient {
               )
             )
         } else builder
-        
+
         builder.build()
       }
     )(client => IO.delay(client.close()))
