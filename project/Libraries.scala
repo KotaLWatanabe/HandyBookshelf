@@ -14,7 +14,7 @@ object Libraries {
   val xmlVersion             = "2.4.0"
   val tapirVersion           = "1.11.34"
   val atnosEffVersion        = "8.0.0"
-  val pekkoVersion           = "1.1.4"
+  val pekkoVersion           = "1.1.5"
   val cassandraDriverVersion = "4.17.0"
   val awsVersion             = "2.29.52"
   val fs2Version             = "3.11.0"
