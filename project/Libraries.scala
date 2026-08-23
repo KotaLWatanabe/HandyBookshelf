@@ -46,7 +46,7 @@ object Libraries {
 
   lazy val iron = "io.github.iltotore" %% "iron" % ironVersion
 //  lazy val ironCats = "io.github.iltotore"     %% "iron-cats" % ironVersion
-  lazy val refined = "eu.timepit"             %% "refined"   % "0.11.3"
+  lazy val refined = "eu.timepit"             %% "refined"   % "0.11.4"
   lazy val xml     = "org.scala-lang.modules" %% "scala-xml" % xmlVersion
   lazy val tapir: Seq[ModuleID] = Seq(
     "com.softwaremill.sttp.tapir" %% "tapir-core"              % tapirVersion,
