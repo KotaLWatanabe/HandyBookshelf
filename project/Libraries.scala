@@ -3,7 +3,7 @@ import sbt.*
 object Libraries {
   val catsVersion            = "2.13.0"
   val catsEffectVersion      = "3.6.3"
-  val scalaTestVersion       = "3.2.19"
+  val scalaTestVersion       = "3.2.20"
   val http4sVersion          = "0.23.30"
   val circeVersion           = "0.14.14"
   val munitVersion           = "1.1.1"
