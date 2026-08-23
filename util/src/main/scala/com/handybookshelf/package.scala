@@ -23,7 +23,7 @@ package object handybookshelf:
   type NES = NonEmptyString
 
   extension (str: String) {
-    def nes: NES = NonEmptyString.unsafeNonEmptyString(str)
+    def nes: NES            = NonEmptyString.unsafeNonEmptyString(str)
     def nesOpt: Option[NES] = NonEmptyString(str)
   }
 

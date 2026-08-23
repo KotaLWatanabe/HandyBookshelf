@@ -7,33 +7,33 @@ import io.circe.Codec
 import java.net.URI
 
 class DynamoDBService private (
-  bookRepository: BookDynamoDBRepository[IO]
+    bookRepository: BookDynamoDBRepository[IO]
 ) {
-  
-  def saveBook(book: Book): IO[Unit] = 
+
+  def saveBook(book: Book): IO[Unit] =
     bookRepository.saveBook(book)
-  
-  def getBook(bookId: BookId): IO[Option[Book]] = 
+
+  def getBook(bookId: BookId): IO[Option[Book]] =
     bookRepository.getBook(bookId)
-  
-  def deleteBook(bookId: BookId): IO[Unit] = 
+
+  def deleteBook(bookId: BookId): IO[Unit] =
     bookRepository.deleteBook(bookId)
-  
-  def listBooks(): IO[List[Book]] = 
+
+  def listBooks(): IO[List[Book]] =
     bookRepository.listBooks()
 }
 
 object DynamoDBService {
-  
-  def createLocal(tableName: String = "HandyBookshelf")(using Codec[Book]): Resource[IO, DynamoDBService] = 
+
+  def createLocal(tableName: String = "HandyBookshelf")(using Codec[Book]): Resource[IO, DynamoDBService] =
     for {
       client <- DynamoDBClient.createLocalClient()
       repository = new DynamoDBRepositoryImpl(client, tableName)
       _ <- Resource.eval(repository.createTableIfNotExists())
       bookRepository = new BookDynamoDBRepositoryImpl(repository)
     } yield new DynamoDBService(bookRepository)
-  
-  def create(endpoint: URI, tableName: String = "HandyBookshelf")(using Codec[Book]): Resource[IO, DynamoDBService] = 
+
+  def create(endpoint: URI, tableName: String = "HandyBookshelf")(using Codec[Book]): Resource[IO, DynamoDBService] =
     for {
       client <- DynamoDBClient.createClient(endpoint)
       repository = new DynamoDBRepositoryImpl(client, tableName)

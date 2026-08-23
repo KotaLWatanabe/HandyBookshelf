@@ -11,13 +11,13 @@ class IdentifiersSpec extends PropertyBasedTestHelpers:
 
   // 有効なarXiv IDの例
   val validArxivIds: List[String] = List(
-    "2301.12345",     // 標準形式
-    "1706.03762",     // Attention is All You Need
-    "2301.12345v1",   // バージョン1
-    "2301.12345v12",  // 2桁バージョン
-    "0704.0001",      // 古い形式
-    "2312.1234",      // 4桁番号
-    "2312.12345"      // 5桁番号
+    "2301.12345",    // 標準形式
+    "1706.03762",    // Attention is All You Need
+    "2301.12345v1",  // バージョン1
+    "2301.12345v12", // 2桁バージョン
+    "0704.0001",     // 古い形式
+    "2312.1234",     // 4桁番号
+    "2312.12345"     // 5桁番号
   )
 
   // 無効なarXiv IDの例
@@ -35,11 +35,11 @@ class IdentifiersSpec extends PropertyBasedTestHelpers:
 
   // 有効なDOIの例
   val validDOIs: List[String] = List(
-    "10.1000/xyz123",           // 基本形式
-    "10.1038/nature12373",      // Nature
-    "10.1109/5.771073",         // IEEE
-    "10.1145/3442188.3445922",  // ACM
-    "10.48550/arXiv.2301.12345", // arXiv DOI
+    "10.1000/xyz123",               // 基本形式
+    "10.1038/nature12373",          // Nature
+    "10.1109/5.771073",             // IEEE
+    "10.1145/3442188.3445922",      // ACM
+    "10.48550/arXiv.2301.12345",    // arXiv DOI
     "10.1007/978-3-319-24574-4_28", // Springer章
     "10.1371/journal.pone.0000000"  // PLOS ONE
   )
@@ -59,7 +59,7 @@ class IdentifiersSpec extends PropertyBasedTestHelpers:
   def genValidArxivId: Gen[String] = for {
     year  <- Gen.choose(7, 99)
     month <- Gen.choose(1, 12)
-    num   <- Gen.oneOf(
+    num <- Gen.oneOf(
       Gen.choose(1000, 9999),
       Gen.choose(10000, 99999)
     )
@@ -72,7 +72,9 @@ class IdentifiersSpec extends PropertyBasedTestHelpers:
   // DOIのジェネレータ
   def genValidDOI: Gen[String] = for {
     prefix <- Gen.choose(1000, 999999999)
-    suffix <- Gen.nonEmptyListOf(Gen.oneOf(Gen.alphaNumChar, Gen.const('-'), Gen.const('_'), Gen.const('.'))).map(_.mkString)
+    suffix <- Gen
+      .nonEmptyListOf(Gen.oneOf(Gen.alphaNumChar, Gen.const('-'), Gen.const('_'), Gen.const('.')))
+      .map(_.mkString)
   } yield s"10.$prefix/$suffix"
 
   describe("ArxivId") {
@@ -128,7 +130,7 @@ class IdentifiersSpec extends PropertyBasedTestHelpers:
     describe("normalization") {
 
       it("should normalize versioned and unversioned IDs to same value") {
-        val base = ArxivId.fromString("2301.12345").map(_.normalized)
+        val base      = ArxivId.fromString("2301.12345").map(_.normalized)
         val versioned = ArxivId.fromString("2301.12345v2").map(_.normalized)
         base shouldBe versioned
       }
