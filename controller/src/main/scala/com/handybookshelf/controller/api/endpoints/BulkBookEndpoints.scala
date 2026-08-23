@@ -64,25 +64,26 @@ final case class BulkRegistrationError(
 )
 
 object BulkBookEndpoints {
-  
+
   // JSON codecs (BookData codecs are in domain module)
-  given Encoder[BulkBookRegistrationRequest] = deriveEncoder
-  given Decoder[BulkBookRegistrationRequest] = deriveDecoder
-  given Encoder[BookRegistrationProgress] = deriveEncoder
-  given Decoder[BookRegistrationProgress] = deriveDecoder
+  given Encoder[BulkBookRegistrationRequest]    = deriveEncoder
+  given Decoder[BulkBookRegistrationRequest]    = deriveDecoder
+  given Encoder[BookRegistrationProgress]       = deriveEncoder
+  given Decoder[BookRegistrationProgress]       = deriveDecoder
   given Encoder[BulkRegistrationProgressUpdate] = deriveEncoder
   given Decoder[BulkRegistrationProgressUpdate] = deriveDecoder
-  given Encoder[BulkRegistrationResponse] = deriveEncoder
-  given Decoder[BulkRegistrationResponse] = deriveDecoder
-  given Encoder[BulkRegistrationResult] = deriveEncoder
-  given Decoder[BulkRegistrationResult] = deriveDecoder
-  given Encoder[BulkRegistrationError] = deriveEncoder
-  given Decoder[BulkRegistrationError] = deriveDecoder
+  given Encoder[BulkRegistrationResponse]       = deriveEncoder
+  given Decoder[BulkRegistrationResponse]       = deriveDecoder
+  given Encoder[BulkRegistrationResult]         = deriveEncoder
+  given Decoder[BulkRegistrationResult]         = deriveDecoder
+  given Encoder[BulkRegistrationError]          = deriveEncoder
+  given Decoder[BulkRegistrationError]          = deriveDecoder
 
   private val bulkBookEndpointRoot = endpointRoot.in("books").in("bulk")
 
   // 大量書籍登録の開始エンドポイント
-  val startBulkRegistration: PublicEndpoint[BulkBookRegistrationRequest, BulkRegistrationError, BulkRegistrationResponse, Any] =
+  val startBulkRegistration
+      : PublicEndpoint[BulkBookRegistrationRequest, BulkRegistrationError, BulkRegistrationResponse, Any] =
     bulkBookEndpointRoot.post
       .in(jsonBody[BulkBookRegistrationRequest])
       .out(jsonBody[BulkRegistrationResponse])

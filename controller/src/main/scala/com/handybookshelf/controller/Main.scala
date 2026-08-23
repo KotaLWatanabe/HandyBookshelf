@@ -1,4 +1,4 @@
-package com.handybookshelf 
+package com.handybookshelf
 package controller
 
 import cats.effect.*
@@ -12,7 +12,7 @@ object Main extends IOApp:
   override def run(args: List[String]): IO[ExitCode] = {
     // Create supervisor system
     val supervisorSystem = actors.SupervisorActorUtil.createSupervisorSystem()
-    
+
     // 全ルートを統合
     val httpApp = Router(
       "/" -> LoginRoutes[IO](supervisorSystem).routes

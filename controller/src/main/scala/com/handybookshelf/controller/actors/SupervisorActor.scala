@@ -9,7 +9,15 @@ import cats.syntax.all.*
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import domain.UserAccountId
-import infrastructure.{SessionService, SessionId, LoginResult, LogoutResult, UserStatusResult, ValidationResult, ExtensionResult}
+import infrastructure.{
+  SessionService,
+  SessionId,
+  LoginResult,
+  LogoutResult,
+  UserStatusResult,
+  ValidationResult,
+  ExtensionResult
+}
 import scala.util.chaining.*
 import scala.concurrent.duration.*
 import scala.util.{Success, Failure}
@@ -19,16 +27,16 @@ object SupervisorActor:
   enum SupervisorCommand:
     // User session management commands
     case LoginUser(
-      userAccountId: UserAccountId,
-      replyTo: ActorRef[LoginResult]
+        userAccountId: UserAccountId,
+        replyTo: ActorRef[LoginResult]
     )
     case LogoutUser(
-      userAccountId: UserAccountId,
-      replyTo: ActorRef[LogoutResult]
+        userAccountId: UserAccountId,
+        replyTo: ActorRef[LogoutResult]
     )
     case GetUserStatus(
-      userAccountId: UserAccountId,
-      replyTo: ActorRef[UserStatusResult]
+        userAccountId: UserAccountId,
+        replyTo: ActorRef[UserStatusResult]
     )
     // Administrative commands
     case GetChildren(replyTo: ActorRef[Set[String]])
@@ -55,8 +63,8 @@ object SupervisorActor:
     }
 
   private def supervising(
-    sessionService: SessionService,
-    children: Set[String]
+      sessionService: SessionService,
+      children: Set[String]
   ): Behavior[SupervisorCommand] =
     Behaviors
       .receive[SupervisorCommand] { (context, message) =>
@@ -76,7 +84,7 @@ object SupervisorActor:
             val result = sessionService.getUserStatus(userAccountId).unsafeRunSync()
             replyTo ! result
             Behaviors.same
-            
+
           // Administrative
           case GetChildren(replyTo) =>
             replyTo ! children
@@ -100,4 +108,3 @@ object SupervisorActorUtil:
    */
   def createSupervisorSystem(sessionService: SessionService): ActorSystem[SupervisorActor.SupervisorCommand] =
     ActorSystem(SupervisorActor(sessionService), "HandyBookshelfSupervisor")
-    

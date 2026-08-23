@@ -7,31 +7,33 @@ import io.github.iltotore.iron.constraint.all.*
 /** ArxivIdConstraint - arXiv IDの制約 */
 type ArxivIdConstraint = Match["^\\d{4}\\.\\d{4,5}(v\\d+)?$"]
 
-/** ArxivId - arXiv論文の識別子
-  *
-  * フォーマット: YYMM.NNNNN または YYMM.NNNNNvN
-  *   - YY: 年（07以降）
-  *   - MM: 月（01-12）
-  *   - NNNNN: 4桁または5桁の番号
-  *   - vN: オプションのバージョン番号
-  *
-  * 例: 2301.12345, 2301.12345v2, 1706.03762
-  */
+/**
+ * ArxivId - arXiv論文の識別子
+ *
+ * フォーマット: YYMM.NNNNN または YYMM.NNNNNvN
+ *   - YY: 年（07以降）
+ *   - MM: 月（01-12）
+ *   - NNNNN: 4桁または5桁の番号
+ *   - vN: オプションのバージョン番号
+ *
+ * 例: 2301.12345, 2301.12345v2, 1706.03762
+ */
 type ArxivId = String :| ArxivIdConstraint
 
 /** DOIConstraint - DOIの制約 */
 type DOIConstraint = Match["^10\\.\\d{4,9}/[^\\s]+$"]
 
-/** DOI - Digital Object Identifier
-  *
-  * フォーマット: 10.prefix/suffix
-  *   - prefix: 4桁以上の登録機関ID
-  *   - suffix: 任意の文字列（英数字、ハイフン、アンダースコア、ピリオド、括弧、スラッシュなど）
-  *
-  * 例: 10.1000/xyz123, 10.1038/nature12373
-  *
-  * Note: DOIは大文字小文字を区別しないため、正規化時に小文字に変換する
-  */
+/**
+ * DOI - Digital Object Identifier
+ *
+ * フォーマット: 10.prefix/suffix
+ *   - prefix: 4桁以上の登録機関ID
+ *   - suffix: 任意の文字列（英数字、ハイフン、アンダースコア、ピリオド、括弧、スラッシュなど）
+ *
+ * 例: 10.1000/xyz123, 10.1038/nature12373
+ *
+ * Note: DOIは大文字小文字を区別しないため、正規化時に小文字に変換する
+ */
 type DOI = String :| DOIConstraint
 
 object ArxivId:

@@ -42,7 +42,7 @@ final case class PaginationInfo(
 
 // Response builders for common patterns
 object ApiResponse {
-  
+
   // Success responses
   def success[T](data: T, message: String = "Operation completed successfully"): ApiResponse[T] =
     ApiResponse(
@@ -50,11 +50,11 @@ object ApiResponse {
       data = Some(data),
       message = message
     )
-  
+
   def successWithMetadata[T](
-    data: T, 
-    metadata: ApiMetadata,
-    message: String = "Operation completed successfully"
+      data: T,
+      metadata: ApiMetadata,
+      message: String = "Operation completed successfully"
   ): ApiResponse[T] =
     ApiResponse(
       success = true,
@@ -62,18 +62,18 @@ object ApiResponse {
       message = message,
       metadata = Some(metadata)
     )
-  
+
   def successEmpty(message: String = "Operation completed successfully"): ApiResponse[Unit] =
     ApiResponse(
       success = true,
       data = None,
       message = message
     )
-  
+
   // Error responses
   def error[T](
-    message: String,
-    errors: List[ApiError] = List.empty
+      message: String,
+      errors: List[ApiError] = List.empty
   ): ApiResponse[T] =
     ApiResponse(
       success = false,
@@ -81,7 +81,7 @@ object ApiResponse {
       message = message,
       errors = if (errors.nonEmpty) Some(errors) else None
     )
-  
+
   def validationError[T](errors: List[ApiError]): ApiResponse[T] =
     ApiResponse(
       success = false,
@@ -89,7 +89,7 @@ object ApiResponse {
       message = "Validation failed",
       errors = Some(errors)
     )
-  
+
   def notFound[T](resource: String = "Resource"): ApiResponse[T] =
     ApiResponse(
       success = false,
@@ -97,7 +97,7 @@ object ApiResponse {
       message = s"$resource not found",
       errors = Some(List(ApiError("NOT_FOUND", s"$resource not found")))
     )
-  
+
   def unauthorized[T](): ApiResponse[T] =
     ApiResponse(
       success = false,
@@ -105,7 +105,7 @@ object ApiResponse {
       message = "Authentication required",
       errors = Some(List(ApiError("UNAUTHORIZED", "Authentication required")))
     )
-  
+
   def forbidden[T](): ApiResponse[T] =
     ApiResponse(
       success = false,
@@ -113,7 +113,7 @@ object ApiResponse {
       message = "Access denied",
       errors = Some(List(ApiError("FORBIDDEN", "Insufficient permissions")))
     )
-  
+
   def internalError[T](message: String = "Internal server error"): ApiResponse[T] =
     ApiResponse(
       success = false,
@@ -125,7 +125,7 @@ object ApiResponse {
 
 // Pagination utilities
 object PaginationInfo {
-  
+
   def create(page: Int, size: Int, total: Long): PaginationInfo = {
     val totalPages = math.ceil(total.toDouble / size.toDouble).toInt
     PaginationInfo(
@@ -137,7 +137,7 @@ object PaginationInfo {
       hasPrevious = page > 1
     )
   }
-  
+
   def fromPageAndSize(page: Int, size: Int, items: List[_]): PaginationInfo = {
     create(page, size, items.size.toLong)
   }
@@ -147,36 +147,37 @@ object PaginationInfo {
 object ApiResponseCodecs {
   given [T: Encoder]: Encoder[ApiResponse[T]] = deriveEncoder
   given [T: Decoder]: Decoder[ApiResponse[T]] = deriveDecoder
-  given Encoder[ApiError] = deriveEncoder
-  given Decoder[ApiError] = deriveDecoder
-  given Encoder[ApiMetadata] = deriveEncoder
-  given Decoder[ApiMetadata] = deriveDecoder
-  given Encoder[PaginationInfo] = deriveEncoder
-  given Decoder[PaginationInfo] = deriveDecoder
+  given Encoder[ApiError]                     = deriveEncoder
+  given Decoder[ApiError]                     = deriveDecoder
+  given Encoder[ApiMetadata]                  = deriveEncoder
+  given Decoder[ApiMetadata]                  = deriveDecoder
+  given Encoder[PaginationInfo]               = deriveEncoder
+  given Decoder[PaginationInfo]               = deriveDecoder
 }
 
 // HTTP status code utilities
 object ApiStatusCodes {
-  
+
   import org.http4s.Status
-  
+
   def getStatusForResponse[T](response: ApiResponse[T]): Status = {
     if (response.success) {
       response.data match {
         case Some(_) => Status.Ok
-        case None => Status.NoContent
+        case None    => Status.NoContent
       }
     } else {
       response.errors.flatMap(_.headOption) match {
-        case Some(error) => error.code match {
-          case "VALIDATION_ERROR" | "BAD_REQUEST" => Status.BadRequest
-          case "UNAUTHORIZED" => Status.Unauthorized
-          case "FORBIDDEN" => Status.Forbidden
-          case "NOT_FOUND" => Status.NotFound
-          case "TIMEOUT_ERROR" => Status.RequestTimeout
-          case "EXTERNAL_SERVICE_ERROR" => Status.BadGateway
-          case _ => Status.InternalServerError
-        }
+        case Some(error) =>
+          error.code match {
+            case "VALIDATION_ERROR" | "BAD_REQUEST" => Status.BadRequest
+            case "UNAUTHORIZED"                     => Status.Unauthorized
+            case "FORBIDDEN"                        => Status.Forbidden
+            case "NOT_FOUND"                        => Status.NotFound
+            case "TIMEOUT_ERROR"                    => Status.RequestTimeout
+            case "EXTERNAL_SERVICE_ERROR"           => Status.BadGateway
+            case _                                  => Status.InternalServerError
+          }
         case None => Status.InternalServerError
       }
     }
@@ -190,18 +191,18 @@ final case class ListResponse[T](
 )
 
 object ListResponse {
-  
+
   def create[T](
-    items: List[T],
-    page: Int,
-    size: Int,
-    total: Long
+      items: List[T],
+      page: Int,
+      size: Int,
+      total: Long
   ): ListResponse[T] =
     ListResponse(
       items = items,
       pagination = PaginationInfo.create(page, size, total)
     )
-  
+
   given [T: Encoder]: Encoder[ListResponse[T]] = deriveEncoder
   given [T: Decoder]: Decoder[ListResponse[T]] = deriveDecoder
 }
